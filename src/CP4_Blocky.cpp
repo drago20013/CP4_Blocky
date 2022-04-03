@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <filesystem>
 
 #include "IndexBuffer.h"
 #include "Renderer.h"
@@ -14,6 +15,7 @@
 #include "VertexArray.h"
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
+#include "world/Chunk.h"
 
 // world, player, camera, block, chunck
 
@@ -25,6 +27,8 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 unsigned int NEW_SCR_WIDTH = SCR_WIDTH;
 unsigned int NEW_SCR_HEIGHT = SCR_HEIGHT;
+
+std::filesystem::path g_WorkDir("C:\\Users\\Michal\\source\\repos\\CP4_Blocky\\x64\\Debug");
 
 int main() {
     // glfw: initialize and configure
@@ -58,161 +62,54 @@ int main() {
     GLCall(glEnable(GL_DEPTH_TEST));
     GLCall(glEnable(GL_BLEND));
     GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    {
+        Renderer render;
 
-    unsigned int cubeIndices[] = {
-        0,  1,  2,  2,  3,  0,   // Front
-        4,  5,  6,  6,  7,  4,   // Back
-        8,  9,  10, 10, 11, 8,   // Right
-        12, 13, 14, 14, 15, 12,  // Left
-        16, 17, 18, 18, 19, 16,  // Up
-        20, 21, 22, 22, 23, 20   // Down
-    };
+        Chunk test;
+        test.CreateMesh();
 
-    VertexArray* va = new VertexArray;
-    VertexBuffer* vb = new VertexBuffer(nullptr, sizeof(Vertex) * 1000);
+        float deltaTime = 0.0f;  // Time between current frame and last frame
+        float lastFrame = 0.0f;  // Time of last frame
+        float lastTime = 0.0f;
+        int nbFrames = 0;
 
-    VertexBufferLayout layout;
-    layout.Push_attrib<glm::vec3>(1);
-    layout.Push_attrib<glm::vec4>(1);
-    layout.Push_attrib<glm::vec2>(1);
-    layout.Push_attrib<float>(1);
-    va->AddBuffer(*vb, layout);
+        // render loop
+        // -----------
+        while (!glfwWindowShouldClose(window)) {
+            float currentFrame = glfwGetTime();
+            deltaTime = currentFrame - lastTime;
+            lastTime = currentFrame;
+            nbFrames++;
+            if (currentFrame - lastFrame >= 2.0) {
+                printf("FPS: %d -> %f ms\n", nbFrames, 1000.0 / (float)nbFrames);
+                nbFrames = 0;
+                lastFrame = currentFrame;
+            }
 
-    IndexBuffer* ib = new IndexBuffer(cubeIndices, 36);
+            processInput(window);
 
-    Shader* shader = new Shader("../res/shaders/Basic.shader");  //
-    shader->Bind();
-    // shader->SetUniform4f("u_Color", 0.8f, 0.3f, 0.8f, 1.0f);
+            render.Clear();
 
-    Texture* texture = new Texture("../res/textures/dirt.jpg");  // Filesystem
-    texture->Bind();
-    shader->SetUniform1i("u_Texture", 0);
+            glm::mat4 model = glm::mat4(1.0f);
+            glm::mat4 view = glm::mat4(1.0f);
+            glm::mat4 proj = glm::mat4(1.0f);
+            proj = glm::perspective(3.1415f / 2.0f,
+                (float)NEW_SCR_WIDTH / (float)NEW_SCR_HEIGHT,
+                0.1f, 100.0f);
+            view = glm::lookAt(glm::vec3(-2.0f, 20.0f, -2.0f),
+                glm::vec3(0.0f, 16.0f, 0.0f),
+                glm::vec3(0.0f, 1.0f, 0.0f));
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 
-    va->Unbind();
-    shader->Unbind();
-    vb->Unbind();
-    ib->Unbind();
+            test.Render(&render, (proj * view * model));
+            //shader->SetUniformMat4f("u_MVP", (proj * view * model));
+            // shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
 
-    Renderer render;
 
-    float r = 0.7f;
-    float increament = 0.05f;
-
-    float deltaTime = 0.0f;  // Time between current frame and last frame
-    float lastFrame = 0.0f;  // Time of last frame
-    float lastTime = 0.0f;
-    int nbFrames = 0;
-
-    // render loop
-    // -----------
-    while (!glfwWindowShouldClose(window)) {
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastTime;
-        lastTime = currentFrame;
-        nbFrames++;
-        if (currentFrame - lastFrame >= 2.0) {
-            printf("FPS: %d -> %f ms\n", nbFrames, 1000.0 / (float)nbFrames);
-            nbFrames = 0;
-            lastFrame = currentFrame;
+            glfwSwapBuffers(window);
+            glfwPollEvents();
         }
-
-        processInput(window);
-
-        render.Clear();
-
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = glm::mat4(1.0f);
-        glm::mat4 proj = glm::mat4(1.0f);
-        proj = glm::perspective(3.1415f / 2.0f,
-                                (float)NEW_SCR_WIDTH / (float)NEW_SCR_HEIGHT,
-                                0.1f, 100.0f);
-        view = glm::lookAt(glm::vec3(0.0f, 3.5f, -1.0f),
-                           glm::vec3(0.0f, 0.0f, 0.0f),
-                           glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-
-        shader->Bind();
-        shader->SetUniformMat4f("u_MVP", (proj * view * model));
-        // shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
-
-        float cubeVerticies[] = {
-            -0.5f, -0.5f, -0.5f, 1.0f, .0f,
-            .0f,   1.f,   0.0f,  0.0f, 1.f,  // 0 //Front
-            0.5f,  -0.5f, -0.5f, 1.0f, .0f,
-            .0f,   1.f,   1.0f,  0.0f, 1.f,  // 1
-            0.5f,  0.5f,  -0.5f, 1.0f, .0f,
-            .0f,   1.f,   1.0f,  1.0f, 1.f,  // 2
-            -0.5f, 0.5f,  -0.5f, 1.0f, .0f,
-            .0f,   1.f,   0.0f,  1.0f, 1.f,  // 3
-
-            0.5f,  -0.5f, 0.5f,  1.0f, .0f,
-            .0f,   1.f,   0.0f,  0.0f, 1.f,  // 4 //Back
-            -0.5f, -0.5f, 0.5f,  1.0f, .0f,
-            .0f,   1.f,   1.0f,  0.0f, 1.f,  // 5
-            -0.5f, 0.5f,  0.5f,  1.0f, .0f,
-            .0f,   1.f,   1.0f,  1.0f, 1.f,  // 6
-            0.5f,  0.5f,  0.5f,  1.0f, .0f,
-            .0f,   1.f,   0.0f,  1.0f, 1.f,  // 7
-
-            0.5f,  -0.5f, -0.5f, 1.0f, .0f,
-            .0f,   1.f,   0.0f,  0.0f, 1.f,  // 8 //Right
-            0.5f,  -0.5f, 0.5f,  1.0f, .0f,
-            .0f,   1.f,   1.0f,  0.0f, 1.f,  // 9
-            0.5f,  0.5f,  0.5f,  1.0f, .0f,
-            .0f,   1.f,   1.0f,  1.0f, 1.f,  // 10
-            0.5f,  0.5f,  -0.5f, 1.0f, .0f,
-            .0f,   1.f,   0.0f,  1.0f, 1.f,  // 11
-
-            -0.5f, -0.5f, 0.5f,  1.0f, .0f,
-            .0f,   1.f,   0.0f,  0.0f, 1.f,  // 12 //Left
-            -0.5f, -0.5f, -0.5f, 1.0f, .0f,
-            .0f,   1.f,   1.0f,  0.0f, 1.f,  // 13
-            -0.5f, 0.5f,  -0.5f, 1.0f, .0f,
-            .0f,   1.f,   1.0f,  1.0f, 1.f,  // 14
-            -0.5f, 0.5f,  0.5f,  1.0f, .0f,
-            .0f,   1.f,   0.0f,  1.0f, 1.f,  // 15
-
-            -0.5f, 0.5f,  -0.5f, 1.0f, .0f,
-            .0f,   1.f,   0.0f,  0.0f, 1.f,  // 16 //Up
-            0.5f,  0.5f,  -0.5f, 1.0f, .0f,
-            .0f,   1.f,   1.0f,  0.0f, 1.f,  // 17
-            0.5f,  0.5f,  0.5f,  1.0f, .0f,
-            .0f,   1.f,   1.0f,  1.0f, 1.f,  // 18
-            -0.5f, 0.5f,  0.5f,  1.0f, .0f,
-            .0f,   1.f,   0.0f,  1.0f, 1.f,  // 19
-
-            -0.5f, -0.5f, 0.5f,  1.0f, .0f,
-            .0f,   1.f,   0.0f,  0.0f, 1.f,  // 20 //Down
-            0.5f,  -0.5f, 0.5f,  1.0f, .0f,
-            .0f,   1.f,   1.0f,  0.0f, 1.f,  // 21
-            0.5f,  -0.5f, -0.5f, 1.0f, .0f,
-            .0f,   1.f,   1.0f,  1.0f, 1.f,  // 22
-            -0.5f, -0.5f, -0.5f, 1.0f, .0f,
-            .0f,   1.f,   0.0f,  1.0f, 1.f  // 23
-        };
-
-        // Set dynamic vertex buffer
-        vb->Bind();
-        GLCall(glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeVerticies),
-                               cubeVerticies));
-
-        render.Draw(*va, *ib, *shader);
-
-        if (r > 2.0f)
-            increament = -0.8f;
-        else if (r < 0.7f)
-            increament = 0.8f;
-
-        r += increament * deltaTime;
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
     }
-
-    delete shader;
-    delete va;
-    delete ib;
-    delete vb;
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();

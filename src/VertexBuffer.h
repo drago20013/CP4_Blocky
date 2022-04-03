@@ -1,5 +1,5 @@
 #pragma once
-
+struct Vertex;
 class VertexBuffer {
 private:
 	unsigned int m_RenderID;

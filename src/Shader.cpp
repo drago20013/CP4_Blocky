@@ -1,10 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 #include "Renderer.h"
-
 #include "Shader.h"
+
+extern std::filesystem::path g_WorkDir;
 
 Shader::Shader(const std::string& filepath) : m_FilePath(filepath), m_RendererID(0) {
     ShaderProgramSource source = ParseShader(filepath);
