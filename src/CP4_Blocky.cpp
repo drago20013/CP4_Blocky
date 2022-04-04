@@ -16,17 +16,26 @@
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
 #include "world/Chunk.h"
+#include "Player.h"
 
 // world, player, camera
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+unsigned int SCR_WIDTH = 800;
+unsigned int SCR_HEIGHT = 600;
+float aspectRatio = (float)SCR_WIDTH / (float)SCR_HEIGHT;
 unsigned int NEW_SCR_WIDTH = SCR_WIDTH;
 unsigned int NEW_SCR_HEIGHT = SCR_HEIGHT;
+
+float deltaTime = 0.0f;  // Time between current frame and last frame
+float lastTime = 0.0f;   // Time of last frame
+
+Player player;
 
 #ifdef _MSC_VER
 std::filesystem::path g_WorkDir(
@@ -54,6 +63,10 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -73,15 +86,13 @@ int main() {
         Chunk test;
         test.CreateMesh();
 
-        float deltaTime = 0.0f;  // Time between current frame and last frame
-        float lastFrame = 0.0f;  // Time of last frame
-        float lastTime = 0.0f;
+        float lastFrame = 0.0f;
         int nbFrames = 0;
 
         // render loop
         // -----------
         while (!glfwWindowShouldClose(window)) {
-            float currentFrame = glfwGetTime();
+            float currentFrame = (float)glfwGetTime();
             deltaTime = currentFrame - lastTime;
             lastTime = currentFrame;
             nbFrames++;
@@ -93,21 +104,11 @@ int main() {
             }
 
             processInput(window);
-
             render.Clear();
 
-            glm::mat4 model = glm::mat4(1.0f);
-            glm::mat4 view = glm::mat4(1.0f);
-            glm::mat4 proj = glm::mat4(1.0f);
-            proj = glm::perspective(
-                3.1415f / 2.0f, (float)NEW_SCR_WIDTH / (float)NEW_SCR_HEIGHT,
-                0.1f, 100.0f);
-            view = glm::lookAt(glm::vec3(0.0f, 10.0f, -2.0f),
-                               glm::vec3(0.0f, 10.0f, 0.0f),
-                               glm::vec3(0.0f, 1.0f, 0.0f));
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+            player.Update();
 
-            test.Render(&render, (proj * view * model));
+            test.Render(&render, (player.GetMVP()));
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -125,6 +126,8 @@ int main() {
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    
+    player.ProcessInput(window, deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback
@@ -132,6 +135,19 @@ void processInput(GLFWwindow* window) {
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     GLCall(glViewport(0, 0, width, height));
-    NEW_SCR_WIDTH = width;
-    NEW_SCR_HEIGHT = height;
+    if(width && height) aspectRatio = (float)width / (float)height;
+}
+
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    player.ProcessMouse(window, xposIn, yposIn);
+}
+
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    player.ProcessScroll(window, xoffset, yoffset);
 }

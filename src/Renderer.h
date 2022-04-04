@@ -26,13 +26,15 @@ void GLClearError();
 bool GLLogCall(const char* function, const char* file, int line);
 
 static constexpr int CHUNK_SIZE = 16;
-static constexpr int CHUNK_VOLUME = CHUNK_SIZE* CHUNK_SIZE* CHUNK_SIZE;
+static constexpr int CHUNK_HEIGHT = 256;
+static constexpr int CHUNK_VOLUME = CHUNK_SIZE* CHUNK_SIZE* CHUNK_HEIGHT;
 
 struct Vertex {
     glm::vec3 Position;
     glm::vec4 Color;
     glm::vec2 TexCoords;
     float TexID;
+    float DirectLight;
 };
 
 class Renderer {
