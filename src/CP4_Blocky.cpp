@@ -3,10 +3,10 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
-#include <filesystem>
 
 #include "IndexBuffer.h"
 #include "Renderer.h"
@@ -17,7 +17,7 @@
 #include "VertexBufferLayout.h"
 #include "world/Chunk.h"
 
-// world, player, camera, block, chunck
+// world, player, camera
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -28,7 +28,12 @@ const unsigned int SCR_HEIGHT = 600;
 unsigned int NEW_SCR_WIDTH = SCR_WIDTH;
 unsigned int NEW_SCR_HEIGHT = SCR_HEIGHT;
 
-std::filesystem::path g_WorkDir("C:\\Users\\Michal\\source\\repos\\CP4_Blocky\\x64\\Debug");
+#ifdef _MSC_VER
+std::filesystem::path g_WorkDir(
+    "C:\\Users\\Michal\\source\\repos\\CP4_Blocky\\x64\\Debug");
+#else
+std::filesystem::path g_WorkDir("/home/drago/CLionProjects/CP4_Blocky/");
+#endif
 
 int main() {
     // glfw: initialize and configure
@@ -81,7 +86,8 @@ int main() {
             lastTime = currentFrame;
             nbFrames++;
             if (currentFrame - lastFrame >= 2.0) {
-                printf("FPS: %d -> %f ms\n", nbFrames, 1000.0 / (float)nbFrames);
+                printf("FPS: %d -> %f ms\n", nbFrames,
+                       1000.0 / (float)nbFrames);
                 nbFrames = 0;
                 lastFrame = currentFrame;
             }
@@ -93,18 +99,15 @@ int main() {
             glm::mat4 model = glm::mat4(1.0f);
             glm::mat4 view = glm::mat4(1.0f);
             glm::mat4 proj = glm::mat4(1.0f);
-            proj = glm::perspective(3.1415f / 2.0f,
-                (float)NEW_SCR_WIDTH / (float)NEW_SCR_HEIGHT,
+            proj = glm::perspective(
+                3.1415f / 2.0f, (float)NEW_SCR_WIDTH / (float)NEW_SCR_HEIGHT,
                 0.1f, 100.0f);
-            view = glm::lookAt(glm::vec3(-2.0f, 20.0f, -2.0f),
-                glm::vec3(0.0f, 16.0f, 0.0f),
-                glm::vec3(0.0f, 1.0f, 0.0f));
+            view = glm::lookAt(glm::vec3(0.0f, 10.0f, -2.0f),
+                               glm::vec3(0.0f, 10.0f, 0.0f),
+                               glm::vec3(0.0f, 1.0f, 0.0f));
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 
             test.Render(&render, (proj * view * model));
-            //shader->SetUniformMat4f("u_MVP", (proj * view * model));
-            // shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
-
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -128,9 +131,6 @@ void processInput(GLFWwindow* window) {
 // function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    // make sure the viewport matches the new window dimensions; note that width
-    // and height will be significantly larger than specified on retina
-    // displays.
     GLCall(glViewport(0, 0, width, height));
     NEW_SCR_WIDTH = width;
     NEW_SCR_HEIGHT = height;

@@ -21,7 +21,7 @@ m_Layout(std::make_unique<VertexBufferLayout>()), m_Shader(std::make_unique<Shad
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int y = 0; y < CHUNK_SIZE; y++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
-                (z%3||y%3) ? m_Blocks[x][y][z].SetActive(true): m_Blocks[x][y][z].SetActive(false);
+                (z%2||y%2||z%2) ? m_Blocks[x][y][z].SetActive(true): m_Blocks[x][y][z].SetActive(false);
             }
         }
     }
