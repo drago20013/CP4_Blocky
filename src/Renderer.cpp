@@ -16,17 +16,10 @@ bool GLLogCall(const char* function, const char* file, int line) {
 }
 
 Renderer::Renderer() {
-    int offset{};
-    for (int i = 0; i < CHUNK_VOLUME*36; i += 6) {
-   
-        indecies.push_back(0+offset);
-        indecies.push_back(1+offset);
-        indecies.push_back(2+offset);
-        indecies.push_back(2+offset);
-        indecies.push_back(3+offset);
-        indecies.push_back(0+offset);
-        offset += 4;
-    }
+    GLCall(glEnable(GL_CULL_FACE));
+    GLCall(glEnable(GL_DEPTH_TEST));
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 }
 
 void Renderer::Clear() const {
@@ -34,16 +27,8 @@ void Renderer::Clear() const {
     GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
-void Renderer::Draw(const VertexArray& va, unsigned int count, const Shader& shader) {
-    m_IndexBuffer = std::make_unique<IndexBuffer>(indecies.data(), count);
+void Renderer::Draw(const VertexArray& va, const Shader& shader, int elements) const {
     shader.Bind();
     va.Bind();
-    GLCall(glDrawElements(GL_TRIANGLES, m_IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr));
-}
-
-void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader) const {
-    shader.Bind();
-    va.Bind();
-    ib.Bind();
-    GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));
+    GLCall(glDrawArrays(GL_TRIANGLES, 0, elements));
 }

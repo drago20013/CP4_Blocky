@@ -8,27 +8,29 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "IndexBuffer.h"
 #include "Renderer.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "VertexArray.h"
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
-#include "world/Chunk.h"
 #include "Player.h"
+#include "../includes/world/WorldSegment.h"
 
 // world, player, camera
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+bool mouseHidden{};
+bool wireFrame{};
 
 // settings
 unsigned int SCR_WIDTH = 800;
 unsigned int SCR_HEIGHT = 600;
-float aspectRatio = (float)SCR_WIDTH / (float)SCR_HEIGHT;
+float aspectRatio = static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT);
 unsigned int NEW_SCR_WIDTH = SCR_WIDTH;
 unsigned int NEW_SCR_HEIGHT = SCR_HEIGHT;
 
@@ -65,8 +67,10 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    mouseHidden = 1;
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -77,14 +81,26 @@ int main() {
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    GLCall(glEnable(GL_DEPTH_TEST));
-    GLCall(glEnable(GL_BLEND));
-    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    //=======================================================
     {
         Renderer render;
 
-        Chunk test;
-        test.CreateMesh();
+        WorldSegmnet* segment = new WorldSegmnet;
+        for(int i = -1; i<1; i++)
+            for(int j = -1; j<1;j++)
+                for (int x = 0; x < CHUNK_SIZE; x++)
+                    for (int y = 0; y < 4; y++)
+                        for (int z = 0; z < CHUNK_SIZE; z++) {
+                            segment->Set(x + CHUNK_SIZE * i, y, z + CHUNK_SIZE * j, 255 / (y + 1));
+                        }
+
+        /*segment->Set(0, 0, 0, 0);
+        segment->Set(0, 0, 1, 0);
+        segment->Set(0, 0, 2, 0);
+        segment->Set(0, 0, 3, 0);
+        segment->Set(-1, 0, 3, 128);
+        segment->Set(0, 0, -2, 64);*/
+
 
         float lastFrame = 0.0f;
         int nbFrames = 0;
@@ -104,15 +120,17 @@ int main() {
             }
 
             processInput(window);
+
             render.Clear();
 
-            player.Update();
+            segment->Render(player);
 
-            test.Render(&render, (player.GetMVP()));
+            player.Update();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
+        delete segment;
     }
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
@@ -128,6 +146,31 @@ void processInput(GLFWwindow* window) {
         glfwSetWindowShouldClose(window, true);
     
     player.ProcessInput(window, deltaTime);
+}
+
+// key callback listen to the key callback event instead of querying the key state in every frame.
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
+    {
+        if (!mouseHidden) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            mouseHidden = 1;
+        }
+        else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            mouseHidden = 0;
+        }
+    }
+    if(key == GLFW_KEY_X && action == GLFW_PRESS)
+        if (!wireFrame) {
+            GLCall(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+            wireFrame = 1;
+        }
+        else {
+            GLCall(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));;
+            wireFrame = 0;
+        }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback
