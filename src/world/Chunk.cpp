@@ -1,5 +1,7 @@
 #include "Chunk.h"
 #include <filesystem>
+#include <cstring>
+
 extern std::filesystem::path g_WorkDir;
 
 Chunk::Chunk() : m_Elements(0), m_Changed(true), m_Renderer(), m_WhiteTexture(0xffffffff)
