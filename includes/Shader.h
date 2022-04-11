@@ -3,23 +3,23 @@
 #include <string>
 #include <unordered_map>
 #include <glm/gtc/matrix_transform.hpp>
+#include "OpenGLObject.h"
 
 struct ShaderProgramSource {
 	std::string VertexSource;
 	std::string FragmentSource;
 };
 
-class Shader {
+class Shader : public OpenGLObject {
 private:
 	std::string m_FilePath;
-	unsigned int m_RendererID;
 	std::unordered_map<std::string, int> m_UniformLocationCache;
 public:
 	Shader(const std::string& filepath);
 	~Shader();
 
-	void Bind() const;
-	void Unbind() const;
+	void Bind() const override;
+	void Unbind() const override;
 
 	void SetUniform1i(const std::string& name, int value);
 	void SetUniform1f(const std::string& name, float value);

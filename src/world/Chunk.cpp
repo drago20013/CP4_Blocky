@@ -23,14 +23,14 @@ Chunk::~Chunk()
 
 uint8_t Chunk::Get(int x, int y, int z) const
 {
-    return m_Blocks[x][y][z];
+    return m_Blocks[x][y][z].IsActive();
 }
 
 void Chunk::Set(int x, int y, int z, uint8_t type)
 {
     if (x < 0) x += CHUNK_SIZE;
     if (z < 0) z += CHUNK_SIZE;
-    m_Blocks[x][y][z] = type;
+    m_Blocks[x][y][z].SetActive(type);
     m_Changed = true;
 }
 
@@ -42,10 +42,11 @@ void Chunk::Update()
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int y = 0; y < CHUNK_HEIGHT; y++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
-                type = m_Blocks[x][y][z];
+                type = m_Blocks[x][y][z].IsActive();
 
-                if (!type) // if empty
+                if (!type) {// if empty
                     continue;
+                }
 
                 // View from negative x (right face)
                     m_Vertecies[i++] = glm::vec4byte(x, y, z, type);
@@ -54,7 +55,6 @@ void Chunk::Update()
                     m_Vertecies[i++] = glm::vec4byte(x, y + 1, z, type);
                     m_Vertecies[i++] = glm::vec4byte(x, y, z + 1, type);
                     m_Vertecies[i++] = glm::vec4byte(x, y + 1, z + 1, type);
-             
                 
                // View from positive x (left face)
                     m_Vertecies[i++] = glm::vec4byte(x + 1, y, z + 1, type);

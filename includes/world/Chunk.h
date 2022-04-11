@@ -7,6 +7,7 @@
 #include "../VertexBufferLayout.h"
 #include "../Shader.h"
 #include "../Texture.h"
+#include "Block.h"
 
 #define CHUNK_SIZE 16
 #define CHUNK_HEIGHT 128
@@ -25,7 +26,7 @@ public:
 	void Render(const glm::mat4& MVP);
 
 private:
-	uint8_t m_Blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE]; //Blocks storage, for now defined only as their type
+	Block m_Blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE]; //Blocks storage, for now defined only as their type
 	std::unique_ptr<VertexBuffer> m_VBO;
 	std::unique_ptr<VertexArray> m_VAO;
 	std::unique_ptr<VertexBufferLayout> m_Layout;

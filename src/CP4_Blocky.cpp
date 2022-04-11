@@ -86,21 +86,11 @@ int main() {
         Renderer render;
 
         WorldSegmnet* segment = new WorldSegmnet;
-        for (int i = -1; i < 1; i++)
-            for (int j = -1; j < 1; j++)
-                for (int x = 0; x < CHUNK_SIZE; x++)
-                    for (int y = 0; y < 4; y++)
-                        for (int z = 0; z < CHUNK_SIZE; z++) {
-                            segment->Set(x + CHUNK_SIZE * i, y,
-                                         z + CHUNK_SIZE * j, 255 / (y + 1));
+                for (int x = -50; x < 50; x++)
+                    for (int y = 0; y < CHUNK_HEIGHT; y++)
+                        for (int z = -50; z < 50; z++) {
+                            segment->Set(x, y, z, y);
                         }
-
-        /*segment->Set(0, 0, 0, 0);
-        segment->Set(0, 0, 1, 0);
-        segment->Set(0, 0, 2, 0);
-        segment->Set(0, 0, 3, 0);
-        segment->Set(-1, 0, 3, 128);
-        segment->Set(0, 0, -2, 64);*/
 
         float lastFrame = 0.0f;
         int nbFrames = 0;

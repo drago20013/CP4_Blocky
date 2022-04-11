@@ -2,12 +2,13 @@
 
 #include "vendor/stb_image/stb_image.h"
 
-Texture::Texture(const std::string& path) : m_RendererID(0), m_FilePath(path), m_LocalBuffer(nullptr), m_Width(0), m_Height(0), m_BPP(0) {
+Texture::Texture(const std::string& path) : m_FilePath(path), m_LocalBuffer(nullptr), m_Width(0), m_Height(0), m_BPP(0) {
+	m_RenderID = 0;
 	stbi_set_flip_vertically_on_load(1);
 	m_LocalBuffer = stbi_load(path.c_str(), &m_Width, &m_Height, &m_BPP, 4);
 
-	GLCall(glGenTextures(1, &m_RendererID));
-	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
+	GLCall(glGenTextures(1, &m_RenderID));
+	GLCall(glBindTexture(GL_TEXTURE_2D, m_RenderID));
 
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
@@ -22,9 +23,10 @@ Texture::Texture(const std::string& path) : m_RendererID(0), m_FilePath(path), m
 		stbi_image_free(m_LocalBuffer);
 }
 
-Texture::Texture(const uint32_t& color) : m_RendererID(0), m_FilePath(""), m_LocalBuffer(nullptr), m_Width(0), m_Height(0), m_BPP(0) {
-	GLCall(glGenTextures(1, &m_RendererID));
-	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
+Texture::Texture(const uint32_t& color) : m_FilePath(""), m_LocalBuffer(nullptr), m_Width(0), m_Height(0), m_BPP(0) {
+	m_RenderID = 0;
+	GLCall(glGenTextures(1, &m_RenderID));
+	GLCall(glBindTexture(GL_TEXTURE_2D, m_RenderID));
 
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
@@ -37,12 +39,12 @@ Texture::Texture(const uint32_t& color) : m_RendererID(0), m_FilePath(""), m_Loc
 }
 
 Texture::~Texture() {
-	GLCall(glDeleteTextures(1, &m_RendererID));
+	GLCall(glDeleteTextures(1, &m_RenderID));
 }
 
 void Texture::Bind(unsigned int slot) const {
 	GLCall(glActiveTexture(GL_TEXTURE0 + slot));
-	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
+	GLCall(glBindTexture(GL_TEXTURE_2D, m_RenderID));
 }
 
 void Texture::Unbind() const {

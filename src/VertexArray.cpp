@@ -4,11 +4,11 @@
 #include "VertexBufferLayout.h"
 
 VertexArray::VertexArray() {
-	GLCall(glGenVertexArrays(1, &m_RendererID));
+	GLCall(glGenVertexArrays(1, &m_RenderID));
 }
 
 VertexArray::~VertexArray() {
-	GLCall(glDeleteVertexArrays(1, &m_RendererID));
+	GLCall(glDeleteVertexArrays(1, &m_RenderID));
 }
 
 void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& layout) {
@@ -25,7 +25,7 @@ void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
 }
 
 void VertexArray::Bind() const {
-	GLCall(glBindVertexArray(m_RendererID));
+	GLCall(glBindVertexArray(m_RenderID));
 }
 
 void VertexArray::Unbind() const {

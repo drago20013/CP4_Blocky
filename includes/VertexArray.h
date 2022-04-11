@@ -1,19 +1,18 @@
 #pragma once
 
+#include "OpenGLObject.h"
 #include "VertexBuffer.h"
 
 class VertexBufferLayout;
 
-class VertexArray {
-private:
-	unsigned int m_RendererID;
+class VertexArray : public OpenGLObject {
 public:
 	VertexArray();
 	~VertexArray();
 
 	void AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& layout);
 
-	void Bind() const;
-	void Unbind() const;
+	void Bind() const override;
+	void Unbind() const override;
 };
 

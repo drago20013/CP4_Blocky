@@ -1,8 +1,8 @@
 #pragma once
+#include "OpenGLObject.h"
+
 struct Vertex;
-class VertexBuffer {
-private:
-	unsigned int m_RenderID;
+class VertexBuffer : public OpenGLObject{
 public:
 	VertexBuffer();
 	VertexBuffer(const void* data, unsigned int size);
@@ -10,7 +10,7 @@ public:
 
 	void LoadData(const void* data, unsigned int size);
 
-	void Bind() const;
-	void Unbind() const;
+	void Bind() const override;
+	void Unbind() const override;
 };
 

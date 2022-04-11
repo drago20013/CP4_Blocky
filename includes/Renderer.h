@@ -27,14 +27,6 @@
 void GLClearError();
 bool GLLogCall(const char* function, const char* file, int line);
 
-struct Vertex {
-    glm::vec3 Position;
-    glm::vec4 Color;
-    glm::vec2 TexCoords;
-    float TexID;
-    float DirectLight;
-};
-
 class Renderer {    
 public:
     Renderer();
