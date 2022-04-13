@@ -27,9 +27,9 @@ void WorldSegmnet::Set(int x, int y, int z, BlockType type) {
     x %= CHUNK_SIZE;
     y %= CHUNK_HEIGHT;
     z %= CHUNK_SIZE;
-
+    
     if (!m_Chunks.contains({chunkX, chunkZ}))
-        m_Chunks.emplace(SegmentPos({chunkX, chunkZ}), new Chunk);
+        m_Chunks.emplace(SegmentPos({chunkX, chunkZ}), new Chunk(chunkX, chunkZ, this));
 
     m_Chunks.find({chunkX, chunkZ})->second->Set(x, y, z, type);
 }
@@ -41,7 +41,6 @@ void WorldSegmnet::Render(Player& player) {
                                glm::vec3(chunk.first.x * CHUNK_SIZE, 0,
                                          chunk.first.z * CHUNK_SIZE));
         player.SetModelM(model);
-        // if ((int)player.GetPosition().x == chunk.first.x)
         chunk.second->Render(player.GetMVP());
     }
 }

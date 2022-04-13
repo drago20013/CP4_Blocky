@@ -1,13 +1,13 @@
 #include "Player.h"
 
-Player::Player() : m_Cam(glm::vec3(0.5f, 3.0f, -1.5f)), m_Proj(glm::mat4(1.0f)), m_View(glm::mat4(1.0f)), m_Model(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))) {
+Player::Player() : m_Cam(glm::vec3(0.5f, 66.0f, -1.5f)), m_Proj(glm::mat4(1.0f)), m_View(glm::mat4(1.0f)), m_Model(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))) {
 	m_LastX = SCR_WIDTH / 2.0f;
 	m_LastY = SCR_HEIGHT / 2.0f;
 	m_FirstMouse = true;
 }
 
 void Player::Update() {
-    m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f, 100.0f);
+    m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f, 1000.0f);
     m_View = m_Cam.GetViewMatrix();
 }
 

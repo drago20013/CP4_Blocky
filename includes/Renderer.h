@@ -12,6 +12,11 @@
 #include "Shader.h"
 #include "VertexArray.h"
 
+namespace glm {
+    typedef glm::tvec3<GLubyte> vec3b;
+    typedef glm::tvec2<GLubyte> vec2b;
+}
+
 #ifdef _MSC_VER
 #define ASSERT(x) \
     if (!(x)) __debugbreak();

@@ -4,7 +4,6 @@
 #include <unordered_map>
 
 #define SEGMENT_SIZE 16
-//#define SEGMENT_HEIGHT 128
 #define SEGMENT_AREA SEGMENT_SIZE*SEGMENT_SIZE
 
 struct SegmentPos

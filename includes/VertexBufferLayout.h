@@ -4,10 +4,6 @@
 
 #include "Renderer.h"
 
-namespace glm {
-    typedef glm::tvec4<GLbyte> vec4byte;
-}
-
 struct VertexBufferElement {
     unsigned int type;
     unsigned int count;
@@ -20,7 +16,7 @@ struct VertexBufferElement {
             case GL_UNSIGNED_INT:
                 return sizeof(GLuint);
             case GL_UNSIGNED_BYTE:
-                return sizeof(GLbyte);
+                return sizeof(GLubyte);
         }
         ASSERT(false);
         return 0;
@@ -76,10 +72,16 @@ public:
         m_Stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE);
     }
 
-    template <std::same_as<glm::vec4byte> T>
+    template <std::same_as<glm::vec3b> T>
     void PushAttrib(unsigned int count) {
-        m_Elements.push_back({ GL_UNSIGNED_BYTE, count * 4, GL_FALSE });
-        m_Stride += 4 * count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE);
+        m_Elements.push_back({ GL_UNSIGNED_BYTE, count * 3, GL_FALSE });
+        m_Stride += 3 * count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE);
+    }
+
+    template <std::same_as<glm::vec2b> T>
+    void PushAttrib(unsigned int count) {
+        m_Elements.push_back({ GL_UNSIGNED_BYTE, count * 2, GL_FALSE });
+        m_Stride += 2 * count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE);
     }
 
     inline const std::vector<VertexBufferElement>& GetElements() const {

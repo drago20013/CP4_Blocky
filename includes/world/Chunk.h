@@ -14,9 +14,11 @@
 #define CHUNK_AREA CHUNK_SIZE*CHUNK_SIZE
 #define CHUNK_VOLUME CHUNK_AREA*CHUNK_HEIGHT
 
+class WorldSegmnet;
+
 class Chunk {
 public:
-	Chunk();
+	Chunk(int x, int z, WorldSegmnet* segment);
 	~Chunk();
 
 	uint8_t Get(int x, int y, int z) const;
@@ -26,12 +28,15 @@ public:
 	void Render(const glm::mat4& MVP);
 
 private:
+	int m_PosX;
+	int m_PosZ;
+	WorldSegmnet* m_Segment;
 	Block m_Blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE]; //Blocks storage, for now defined only as their type
 	std::unique_ptr<VertexBuffer> m_VBO;
 	std::unique_ptr<VertexArray> m_VAO;
 	std::unique_ptr<VertexBufferLayout> m_Layout;
 	std::unique_ptr<Shader> m_ChunkShader;
-	glm::vec4byte* m_Vertecies;
+	Vertex* m_Vertecies;
 	Renderer m_Renderer;
 	Texture m_WhiteTexture;
 	int m_Elements;

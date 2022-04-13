@@ -86,9 +86,9 @@ int main() {
         Renderer render;
 
         WorldSegmnet* segment = new WorldSegmnet;
-        for (int x = -50; x < 50; x++)
-            for (int y = 0; y < CHUNK_HEIGHT; y++)
-                for (int z = -50; z < 50; z++) {
+        for (int x = -128 ;x < 128; x++)
+            for (int y = 0; y < CHUNK_HEIGHT/2; y++)
+                for (int z = -128; z < 128; z++) {
                     segment->Set(x, y, z, BlockType::BlockType_Grass);
                 }
 
@@ -112,7 +112,7 @@ int main() {
             processInput(window);
 
             render.Clear();
-
+        
             segment->Render(player);
 
             player.Update();
