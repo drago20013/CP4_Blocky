@@ -12,3 +12,7 @@ bool Block::IsActive() const {
 void Block::SetActive(bool active) {
 	m_Active = active;
 }
+
+void Block::SetType(BlockType type){
+    m_BlockType = type;
+}

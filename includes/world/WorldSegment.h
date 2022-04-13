@@ -34,7 +34,7 @@ public:
 	~WorldSegmnet();
 
 	uint8_t Get(int x, int y, int z) const;
-	void Set(int x, int y, int z, uint8_t type);
+	void Set(int x, int y, int z, BlockType type);
 
 	void Render(Player& player);
 

@@ -20,7 +20,7 @@ public:
 	~Chunk();
 
 	uint8_t Get(int x, int y, int z) const;
-	void Set(int x, int y, int z, uint8_t type);
+	void Set(int x, int y, int z, BlockType type);
 
 	void Update();
 	void Render(const glm::mat4& MVP);

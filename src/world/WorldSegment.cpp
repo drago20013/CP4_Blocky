@@ -20,7 +20,7 @@ uint8_t WorldSegmnet::Get(int x, int y, int z) const {
         return m_Chunks.find({chunkX, chunkZ})->second->Get(x, y, z);
 }
 
-void WorldSegmnet::Set(int x, int y, int z, uint8_t type) {
+void WorldSegmnet::Set(int x, int y, int z, BlockType type) {
     int chunkX = (int)floor((float)x / CHUNK_SIZE);
     int chunkZ = (int)floor((float)z / CHUNK_SIZE);
 

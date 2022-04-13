@@ -11,7 +11,7 @@ struct Vertex {
 
 enum class BlockType {
 	BlockType_Default = 0,
-	BlockType_Grass,
+	BlockType_Grass = 255,
 	BlockType_Dirt,
 	BlockType_Water,
 	BlockType_Stone,
@@ -25,6 +25,8 @@ public:
 	Block();
 	bool IsActive() const;
 	void SetActive(bool active);
+    void SetType(BlockType type);
+    BlockType GetType()const {return m_BlockType;}
 private: 
 	bool m_Active;
 	BlockType m_BlockType;
