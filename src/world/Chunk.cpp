@@ -17,6 +17,7 @@ Chunk::Chunk(int x, int z, WorldSegmnet* segment)
     m_Layout = std::make_unique<VertexBufferLayout>();
     m_Vertecies = new Vertex[CHUNK_VOLUME * 6 * 6];
     m_Layout->PushAttrib<glm::vec3b>(1);
+    m_Layout->PushAttrib<GLubyte>(1);
 }
 
 Chunk::~Chunk() {
@@ -52,62 +53,62 @@ void Chunk::Update() {
 
                 if (x == 0 && !m_Segment->Get((m_PosX*CHUNK_SIZE) + x -1,y, (m_PosZ * CHUNK_SIZE) +z) || x > 0 && !(bool)m_Blocks[x - 1][y][z].GetType()) {
                     // View from negative x (right face)
-                    m_Vertecies[i++] = { glm::vec3b(x, y, z)        };
-                    m_Vertecies[i++] = { glm::vec3b(x, y, z + 1)    };
-                    m_Vertecies[i++] = { glm::vec3b(x, y + 1, z)    };
-                    m_Vertecies[i++] = { glm::vec3b(x, y + 1, z)    };
-                    m_Vertecies[i++] = { glm::vec3b(x, y, z + 1)    };
-                    m_Vertecies[i++] = { glm::vec3b(x, y + 1, z + 1)};
+                    m_Vertecies[i++] = { glm::vec3b(x, y, z)        , 8};
+                    m_Vertecies[i++] = { glm::vec3b(x, y, z + 1)    , 8};
+                    m_Vertecies[i++] = { glm::vec3b(x, y + 1, z)    , 8};
+                    m_Vertecies[i++] = { glm::vec3b(x, y + 1, z)    , 8};
+                    m_Vertecies[i++] = { glm::vec3b(x, y, z + 1)    , 8};
+                    m_Vertecies[i++] = { glm::vec3b(x, y + 1, z + 1), 8};
                 }
 
                 if (x == CHUNK_SIZE - 1 && !m_Segment->Get((m_PosX * CHUNK_SIZE) + x + 1, y, (m_PosZ * CHUNK_SIZE) + z) || x < CHUNK_SIZE-1 && !(bool)m_Blocks[x + 1][y][z].GetType()) {
                     // View from positive x (left face)
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1)    };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)        };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1)};
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1)};
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)        };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z)    };
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1)    , 8};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)        , 8};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1), 8};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1), 8};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)        , 8};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z)    , 8};
                 }
 
                 if (z == 0 && !m_Segment->Get((m_PosX * CHUNK_SIZE) + x, y, (m_PosZ * CHUNK_SIZE) + z - 1) || z > 0 && !(bool)m_Blocks[x][y][z - 1].GetType()) {
                     // View from negative z (front face)
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)    };
-                    m_Vertecies[i++] = {glm::vec3b(x, y, z)        };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z)};
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z)};
-                    m_Vertecies[i++] = {glm::vec3b(x, y, z)        };
-                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z)    };
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)    , 6};
+                    m_Vertecies[i++] = {glm::vec3b(x, y, z)        , 6};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z), 6};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z), 6};
+                    m_Vertecies[i++] = {glm::vec3b(x, y, z)        , 6};
+                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z)    , 6};
                 }
 
                 if (z == CHUNK_SIZE - 1 && !m_Segment->Get((m_PosX * CHUNK_SIZE) + x, y, (m_PosZ * CHUNK_SIZE) + z + 1) || z < CHUNK_SIZE-1 && !(bool)m_Blocks[x][y][z + 1].GetType()) {
                     // View from positive z (back face)
-                    m_Vertecies[i++] = {glm::vec3b(x, y, z + 1)        };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1)    };
-                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z + 1)    };
-                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z + 1)    };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1)    };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1)};
+                    m_Vertecies[i++] = {glm::vec3b(x, y, z + 1)        , 6};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1)    , 6};
+                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z + 1)    , 6};
+                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z + 1)    , 6};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1)    , 6};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1), 6};
                 }
 
                 if (y == 0 || y > 0 && !(bool)m_Blocks[x][y - 1][z].GetType()) {
                     // View from negative y (bottom face)
-                    m_Vertecies[i++] = {glm::vec3b(x, y, z)        };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)    };
-                    m_Vertecies[i++] = {glm::vec3b(x, y, z + 1)    };
-                    m_Vertecies[i++] = {glm::vec3b(x, y, z + 1)    };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)    };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1)};
+                    m_Vertecies[i++] = {glm::vec3b(x, y, z)        , 4};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)    , 4};
+                    m_Vertecies[i++] = {glm::vec3b(x, y, z + 1)    , 4};
+                    m_Vertecies[i++] = {glm::vec3b(x, y, z + 1)    , 4};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)    , 4};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1), 4};
                 }
 
                 if (y == CHUNK_HEIGHT - 1 || y < CHUNK_HEIGHT-1 && !(bool)m_Blocks[x][y + 1][z].GetType()) {
                     // View from positive y (up face)
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z)    };
-                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z)        };
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1)};
-                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1)};
-                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z)        };
-                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z + 1)    };
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z)    , 10};
+                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z)        , 10};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1), 10};
+                    m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1), 10};
+                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z)        , 10};
+                    m_Vertecies[i++] = {glm::vec3b(x, y + 1, z + 1)    , 10};
                 }
             }
         }

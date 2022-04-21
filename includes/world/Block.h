@@ -10,7 +10,7 @@ namespace glm {
 
 struct Vertex {
 	glm::vec3b Position;
-	//float DirectLight;
+	GLubyte DirectLight;
 };
 
 enum class BlockType {

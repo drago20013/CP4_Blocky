@@ -68,7 +68,7 @@ public:
 
     template <std::same_as<unsigned char> T>
     void PushAttrib(unsigned int count) {
-        m_Elements.push_back({GL_UNSIGNED_BYTE, count, GL_TRUE});
+        m_Elements.push_back({GL_UNSIGNED_BYTE, count, GL_FALSE});
         m_Stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE);
     }
 

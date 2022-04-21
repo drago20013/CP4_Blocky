@@ -1,25 +1,24 @@
 #shader vertex
 #version 330 core
 
-layout(location = 0) in vec3 position;
+layout(location = 0) in vec4 position;
+layout(location = 1) in float directLight;
 
 uniform mat4 u_MVP;
 
-out vec2 v_TexCoord;
-out float v_directLight;
+out ivec2 v_TexCoord;
+out vec4 v_directLightColor;
 
 void main(void) {
-        gl_Position = u_MVP * vec4(position, 1.0);
-	//v_directLight = directLight;
+	v_directLightColor = vec4(0.2*directLight/10, 0.5*directLight/10, 0.8*directLight/10, 1.0);
+	gl_Position = u_MVP * position;
 }
 
 #shader fragment
 #version 330
 
-layout(location = 0) out vec4 color;
-
-in float v_directLight;
+in vec4 v_directLightColor;
 
 void main(void) {
-  color = vec4(0.6, 0.5, 0.2, 1.0); 
+  gl_FragColor =  v_directLightColor;
 }
