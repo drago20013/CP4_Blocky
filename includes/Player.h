@@ -11,7 +11,7 @@ extern float aspectRatio;
 
 class Player {
 public:
-    Player();
+    Player(glm::vec3 pos = glm::vec3(0.0f, 128.0f, 0.0f), glm::vec3 dimensions = glm::vec3(1.0f, 2.0f, 1.0f), float speed = 10.0f);
     void ProcessMouse(GLFWwindow* window, double& xposIn, double& yposIn);
     void ProcessScroll(GLFWwindow* window, double& xoffset, double& yoffset);
     void ProcessInput(GLFWwindow* window, float& deltaTime);
@@ -28,6 +28,11 @@ public:
     const glm::vec3& GetPosition() const { return m_Cam.GetPosition(); }
 
 private:
+    glm::vec3 m_Pos;
+    glm::vec3 m_dPos;
+    glm::vec3 m_Dimensions;
+    bool m_OnGround;
+    float m_Speed;
     Camera m_Cam;
     float m_LastX;
     float m_LastY;
