@@ -29,14 +29,19 @@ struct std::hash<T>
 
 class WorldSegmnet {
 public:
-	WorldSegmnet();
+	WorldSegmnet(std::shared_ptr<Player> player);
 	~WorldSegmnet();
 
-	uint8_t Get(int x, int y, int z) const;
+	BlockType Get(int x, int y, int z) const;
+	bool IsActive(int x, int y, int z) const;
 	void Set(int x, int y, int z, BlockType type);
+	void SetActive(int x, int y, int z, bool activeLevel);
 
-	void Render(Player& player);
+	void Render();
+	void CheckCollision();
 
 private:
+	std::shared_ptr<Player> m_Player;
+	glm::vec3 m_lastPlayerPos;
 	std::unordered_map<SegmentPos, Chunk*> m_Chunks;
 };

@@ -6,21 +6,12 @@
 
 #include <vector>
 
-// Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
-enum class Camera_Movement {
-    FORWARD,
-    BACKWARD,
-    LEFT,
-    RIGHT,
-    JUMP
-};
-
 // Default camera values
-const float YAW = 90.0f;
-const float PITCH = 0.0f;
-const float SPEED = 10.0f;
-const float SENSITIVITY = 0.1f;
-const float ZOOM = 45.0f;
+constexpr float YAW = 90.0f;
+constexpr float PITCH = 0.0f;
+constexpr float SPEED = 10.0f;
+constexpr float SENSITIVITY = 0.1f;
+constexpr float ZOOM = 45.0f;
 
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
@@ -61,28 +52,16 @@ public:
     }
 
     const glm::vec3& GetPosition() const { return Position; }
+    const glm::vec3& GetForward() const { return -glm::normalize(glm::cross(Right, WorldUp)); }
+    const glm::vec3& GetRight() const { return Right; }
+    const glm::vec3& GetWorldUp() const { return WorldUp; }
+    void SetPosition(glm::vec3 newPosition) { Position = newPosition; }
     const float& GetZoom() const { return Zoom; }
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix()
     {
         return glm::lookAt(Position, Position + Front, Up);
-    }
-
-    // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-    void ProcessKeyboard(Camera_Movement direction, glm::vec3 dPos, float deltaTime)
-    {
-        float velocity = MovementSpeed * deltaTime;
-        if (direction == Camera_Movement::FORWARD)
-            Position += Front * velocity * dPos.z;
-        if (direction == Camera_Movement::BACKWARD)
-            Position -= Front * velocity * dPos.z;
-        if (direction == Camera_Movement::LEFT)
-            Position -= Right * velocity * dPos.x;
-        if (direction == Camera_Movement::RIGHT)
-            Position += Right * velocity * dPos.x;
-        if (direction == Camera_Movement::JUMP)
-            Position += WorldUp * velocity * dPos.y;
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -122,7 +101,7 @@ private:
     void updateCameraVectors()
     {
         // calculate the new Front vector
-        glm::vec3 front;
+        glm::vec3 front{};
         front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
         front.y = sin(glm::radians(Pitch));
         front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));

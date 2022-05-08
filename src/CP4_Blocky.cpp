@@ -17,27 +17,19 @@
 #include "VertexBufferLayout.h"
 #include "WorldSegment.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
-void key_callback(GLFWwindow* window, int key, int scancode, int action,
-                  int mods);
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-bool mouseHidden{};
-bool wireFrame{};
-
 // settings
 unsigned int SCR_WIDTH = 800;
 unsigned int SCR_HEIGHT = 600;
 float aspectRatio =
-    static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT);
+static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT);
 unsigned int NEW_SCR_WIDTH = SCR_WIDTH;
 unsigned int NEW_SCR_HEIGHT = SCR_HEIGHT;
+bool mouseHidden{};
+bool flyMode{};
+bool wireFrame{};
 
 float deltaTime = 0.0f;  // Time between current frame and last frame
 float lastTime = 0.0f;   // Time of last frame
-
-Player player;
 
 #ifdef _MSC_VER
 std::filesystem::path g_WorkDir(
@@ -45,6 +37,8 @@ std::filesystem::path g_WorkDir(
 #else
 std::filesystem::path g_WorkDir("/home/drago/CLionProjects/CP4_Blocky/");
 #endif
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main() {
     // glfw: initialize and configure
@@ -63,14 +57,59 @@ int main() {
         glfwTerminate();
         return -1;
     }
+
+    std::shared_ptr<Player> player = std::make_shared<Player>();
+
+    glfwSetWindowUserPointer(window, player.get());
+
+    auto playerScrollCallback = [](GLFWwindow* window, double xoffset, double yoffset) {
+        if (mouseHidden) static_cast<Player*>(glfwGetWindowUserPointer(window))->ProcessScroll(window, yoffset);
+    };
+
+    auto playerMouseCallback = [](GLFWwindow* window, double xposIn, double yposIn) {
+        if (mouseHidden) static_cast<Player*>(glfwGetWindowUserPointer(window))->ProcessMouse(window, xposIn, yposIn);
+    };
+
+    auto keyCallback = [](GLFWwindow* window, int key, int scancode, int action,
+        int mods) {
+        if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS) {
+            if (!mouseHidden) {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                mouseHidden = true;
+            }
+            else {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                mouseHidden = false;
+                static_cast<Player*>(glfwGetWindowUserPointer(window))->SetFirstMouse();
+            }
+        }
+
+        if (key == GLFW_KEY_X && action == GLFW_PRESS) {
+            if (!wireFrame) {
+                GLCall(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+                wireFrame = true;
+            }
+            else {
+                GLCall(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+                wireFrame = false;
+            }
+        }  
+
+        if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
+            if (!flyMode) {
+                flyMode = true;
+            }
+            else {
+                flyMode = false;
+            }
+        }
+    };
+
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetKeyCallback(window, key_callback);
-
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    mouseHidden = 1;
+    glfwSetCursorPosCallback(window, playerMouseCallback);
+    glfwSetScrollCallback(window, playerScrollCallback);
+    glfwSetKeyCallback(window, keyCallback);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -83,14 +122,26 @@ int main() {
 
     //=======================================================
     {
-        Renderer render;
+        std::unique_ptr<Renderer> render = std::make_unique<Renderer>();
+       
 
-        WorldSegmnet* segment = new WorldSegmnet;
-        for (int x = -128 ;x < 128; x++)
+        std::unique_ptr<WorldSegmnet> segment = std::make_unique<WorldSegmnet>(player);
+        for (int x = -64 ;x < 64; x++)
             for (int y = 0; y < CHUNK_HEIGHT/2; y++)
-                for (int z = -128; z < 128; z++) {
+                for (int z = -64; z < 64; z++) {
                     segment->Set(x, y, z, BlockType::BlockType_Grass);
+                    segment->SetActive(x, y, z, true);
                 }
+
+        for (int x = -2; x < 2; x++)
+            for (int y = CHUNK_HEIGHT *.5f-3; y < CHUNK_HEIGHT *.5f; y++)
+                for (int z = -2; z < 2; z++) {
+                    segment->SetActive(x, y, z, false);
+                }
+
+        segment->SetActive(1, CHUNK_HEIGHT * .5f - 1, 1, true);
+        segment->SetActive(1, CHUNK_HEIGHT * .5f - 1, 0, true);
+        segment->SetActive(1, CHUNK_HEIGHT * .5f - 1, -1, true);
 
         float lastFrame = 0.0f;
         int nbFrames = 0;
@@ -105,62 +156,32 @@ int main() {
             if (currentFrame - lastFrame >= 2.0) {
                 printf("FPS: %d -> %f ms\n", nbFrames,
                        1000.0 / (float)nbFrames);
+                printf("Player position: x:%f y:%f z:%f\n", player->GetPosition().x, player->GetPosition().y, player->GetPosition().z);
                 nbFrames = 0;
                 lastFrame = currentFrame;
             }
 
-            processInput(window);
-
-            render.Clear();
+            render->Clear();
         
-            segment->Render(player);
+            segment->CheckCollision();
 
-            player.Update();
+            player->Update(deltaTime);
+
+            if (mouseHidden) player->ProcessMove(window, deltaTime);
+
+            segment->Render();
+
+            if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+                glfwSetWindowShouldClose(window, true);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
-        delete segment;
     }
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
-}
-
-// process all input: query GLFW whether relevant keys are pressed/released this
-// frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    if (mouseHidden) player.ProcessInput(window, deltaTime);
-}
-
-// key callback listen to the key callback event instead of querying the key
-// state in every frame.
-void key_callback(GLFWwindow* window, int key, int scancode, int action,
-                  int mods) {
-    if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS) {
-        if (!mouseHidden) {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            mouseHidden = 1;
-        } else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            mouseHidden = 0;
-            player.SetFirstMouse();
-        }
-    }
-    if (key == GLFW_KEY_X && action == GLFW_PRESS) {
-        if (!wireFrame) {
-            GLCall(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-            wireFrame = 1;
-        } else {
-            GLCall(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-            wireFrame = 0;
-        }
-    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback
@@ -169,16 +190,4 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action,
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     GLCall(glViewport(0, 0, width, height));
     if (width && height) aspectRatio = (float)width / (float)height;
-}
-
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
-    if (mouseHidden) player.ProcessMouse(window, xposIn, yposIn);
-}
-
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    if (mouseHidden) player.ProcessScroll(window, xoffset, yoffset);
 }

@@ -25,10 +25,10 @@ Chunk::~Chunk() {
     delete[] m_Vertecies;
 }
 
-uint8_t Chunk::Get(int x, int y, int z) const {
+BlockType Chunk::Get(int x, int y, int z) const {
     if (x < 0) x += CHUNK_SIZE;
     if (z < 0) z += CHUNK_SIZE;
-    return (uint8_t)m_Blocks[x][y][z].GetType();
+    return m_Blocks[x][y][z].GetType();
 }
 
 void Chunk::Set(int x, int y, int z, BlockType type) {
@@ -38,20 +38,32 @@ void Chunk::Set(int x, int y, int z, BlockType type) {
     m_Changed = true;
 }
 
+void Chunk::SetActive(int x, int y, int z, bool activeLevel)
+{
+    if (x < 0) x += CHUNK_SIZE;
+    if (z < 0) z += CHUNK_SIZE;
+    m_Blocks[x][y][z].SetActive(activeLevel);
+}
+
+bool Chunk::IsActive(int x, int y, int z)
+{
+    if (x < 0) x += CHUNK_SIZE;
+    if (z < 0) z += CHUNK_SIZE;
+    return m_Blocks[x][y][z].IsActive();
+}
+
 void Chunk::Update() {
     m_Changed = false;
     int i = 0;
-    uint8_t type{};
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int y = 0; y < CHUNK_HEIGHT; y++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
-                type = (uint8_t)m_Blocks[x][y][z].GetType();
 
-                if (!type) {  // if empty
+                if (!m_Blocks[x][y][z].IsActive()) {  // if empty
                     continue;
                 }
 
-                if (x == 0 && !m_Segment->Get((m_PosX*CHUNK_SIZE) + x -1,y, (m_PosZ * CHUNK_SIZE) +z) || x > 0 && !(bool)m_Blocks[x - 1][y][z].GetType()) {
+                if (x == 0 && !m_Segment->IsActive((m_PosX*CHUNK_SIZE) + x -1,y, (m_PosZ * CHUNK_SIZE) +z) || x > 0 && !m_Blocks[x - 1][y][z].IsActive()) {
                     // View from negative x (right face)
                     m_Vertecies[i++] = { glm::vec3b(x, y, z)        , 8};
                     m_Vertecies[i++] = { glm::vec3b(x, y, z + 1)    , 8};
@@ -61,7 +73,7 @@ void Chunk::Update() {
                     m_Vertecies[i++] = { glm::vec3b(x, y + 1, z + 1), 8};
                 }
 
-                if (x == CHUNK_SIZE - 1 && !m_Segment->Get((m_PosX * CHUNK_SIZE) + x + 1, y, (m_PosZ * CHUNK_SIZE) + z) || x < CHUNK_SIZE-1 && !(bool)m_Blocks[x + 1][y][z].GetType()) {
+                if (x == CHUNK_SIZE - 1 && !m_Segment->IsActive((m_PosX * CHUNK_SIZE) + x + 1, y, (m_PosZ * CHUNK_SIZE) + z) || x < CHUNK_SIZE-1 && !m_Blocks[x + 1][y][z].IsActive()) {
                     // View from positive x (left face)
                     m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1)    , 8};
                     m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)        , 8};
@@ -71,7 +83,7 @@ void Chunk::Update() {
                     m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z)    , 8};
                 }
 
-                if (z == 0 && !m_Segment->Get((m_PosX * CHUNK_SIZE) + x, y, (m_PosZ * CHUNK_SIZE) + z - 1) || z > 0 && !(bool)m_Blocks[x][y][z - 1].GetType()) {
+                if (z == 0 && !m_Segment->IsActive((m_PosX * CHUNK_SIZE) + x, y, (m_PosZ * CHUNK_SIZE) + z - 1) || z > 0 && !m_Blocks[x][y][z - 1].IsActive()) {
                     // View from negative z (front face)
                     m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)    , 6};
                     m_Vertecies[i++] = {glm::vec3b(x, y, z)        , 6};
@@ -81,7 +93,7 @@ void Chunk::Update() {
                     m_Vertecies[i++] = {glm::vec3b(x, y + 1, z)    , 6};
                 }
 
-                if (z == CHUNK_SIZE - 1 && !m_Segment->Get((m_PosX * CHUNK_SIZE) + x, y, (m_PosZ * CHUNK_SIZE) + z + 1) || z < CHUNK_SIZE-1 && !(bool)m_Blocks[x][y][z + 1].GetType()) {
+                if (z == CHUNK_SIZE - 1 && !m_Segment->IsActive((m_PosX * CHUNK_SIZE) + x, y, (m_PosZ * CHUNK_SIZE) + z + 1) || z < CHUNK_SIZE-1 && !m_Blocks[x][y][z + 1].IsActive()) {
                     // View from positive z (back face)
                     m_Vertecies[i++] = {glm::vec3b(x, y, z + 1)        , 6};
                     m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1)    , 6};
@@ -91,7 +103,7 @@ void Chunk::Update() {
                     m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z + 1), 6};
                 }
 
-                if (y == 0 || y > 0 && !(bool)m_Blocks[x][y - 1][z].GetType()) {
+                if (y == 0 || y > 0 && !m_Blocks[x][y - 1][z].IsActive()) {
                     // View from negative y (bottom face)
                     m_Vertecies[i++] = {glm::vec3b(x, y, z)        , 4};
                     m_Vertecies[i++] = {glm::vec3b(x + 1, y, z)    , 4};
@@ -101,7 +113,7 @@ void Chunk::Update() {
                     m_Vertecies[i++] = {glm::vec3b(x + 1, y, z + 1), 4};
                 }
 
-                if (y == CHUNK_HEIGHT - 1 || y < CHUNK_HEIGHT-1 && !(bool)m_Blocks[x][y + 1][z].GetType()) {
+                if (y == CHUNK_HEIGHT - 1 || y < CHUNK_HEIGHT-1 && !m_Blocks[x][y + 1][z].IsActive()) {
                     // View from positive y (up face)
                     m_Vertecies[i++] = {glm::vec3b(x + 1, y + 1, z)    , 10};
                     m_Vertecies[i++] = {glm::vec3b(x, y + 1, z)        , 10};

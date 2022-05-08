@@ -21,8 +21,11 @@ public:
 	Chunk(int x, int z, WorldSegmnet* segment);
 	~Chunk();
 
-	uint8_t Get(int x, int y, int z) const;
+	BlockType Get(int x, int y, int z) const;
 	void Set(int x, int y, int z, BlockType type);
+
+	void SetActive(int x, int y, int z, bool activeLevel);
+	bool IsActive(int x, int y, int z);
 
 	void Update();
 	void Render(const glm::mat4& MVP);
