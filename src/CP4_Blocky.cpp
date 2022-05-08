@@ -121,27 +121,33 @@ int main() {
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     //=======================================================
+
     {
         std::unique_ptr<Renderer> render = std::make_unique<Renderer>();
        
-
         std::unique_ptr<WorldSegmnet> segment = std::make_unique<WorldSegmnet>(player);
+
         for (int x = -64 ;x < 64; x++)
             for (int y = 0; y < CHUNK_HEIGHT/2; y++)
                 for (int z = -64; z < 64; z++) {
                     segment->Set(x, y, z, BlockType::BlockType_Grass);
                     segment->SetActive(x, y, z, true);
                 }
+        for (int y = 0; y < CHUNK_HEIGHT; y++) {
+            for (int z = -64; z < 64; z++) {
+                segment->Set(63, y, z, BlockType::BlockType_Grass);
+                segment->SetActive(63, y, z, true);
+                segment->Set(z, y, 63, BlockType::BlockType_Grass);
+                segment->SetActive(z, y, 63, true);
+            }
+        }
 
-        for (int x = -2; x < 2; x++)
-            for (int y = CHUNK_HEIGHT *.5f-3; y < CHUNK_HEIGHT *.5f; y++)
-                for (int z = -2; z < 2; z++) {
-                    segment->SetActive(x, y, z, false);
-                }
-
-        segment->SetActive(1, CHUNK_HEIGHT * .5f - 1, 1, true);
-        segment->SetActive(1, CHUNK_HEIGHT * .5f - 1, 0, true);
-        segment->SetActive(1, CHUNK_HEIGHT * .5f - 1, -1, true);
+        segment->Set(0, 66, 62, BlockType::BlockType_Grass);
+        segment->SetActive(0, 66, 62, true);
+        segment->Set(1, 66, 62, BlockType::BlockType_Grass);
+        segment->SetActive(1, 66, 62, true);
+        segment->Set(2, 66, 62, BlockType::BlockType_Grass);
+        segment->SetActive(2, 66, 62, true);
 
         float lastFrame = 0.0f;
         int nbFrames = 0;
@@ -162,10 +168,10 @@ int main() {
             }
 
             render->Clear();
-        
-            segment->CheckCollision();
-
+  
             player->Update(deltaTime);
+
+            segment->CheckCollision();
 
             if (mouseHidden) player->ProcessMove(window, deltaTime);
 

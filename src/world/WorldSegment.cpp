@@ -74,10 +74,10 @@ void WorldSegmnet::Render() {
     }
 }
 
+//REDO ALL THIS *********************
 void WorldSegmnet::CheckCollision()
 {
     glm::vec3 pos = m_Player->GetPosition();
-    glm::vec3 deltaPos = m_Player->GetDeltaPosition();
     glm::ivec3 blockPos = pos;
     int chunkX = (int)floor((float)pos.x / CHUNK_SIZE);
     int chunkZ = (int)floor((float)pos.z / CHUNK_SIZE);
@@ -87,31 +87,14 @@ void WorldSegmnet::CheckCollision()
         blockPos.x %= CHUNK_SIZE;
         blockPos.y %= CHUNK_HEIGHT;
         blockPos.z %= CHUNK_SIZE;
-        //printf("Direction: %f, %f, %f\n", direction.x, direction.y, direction.z);
+        // Rough 
         if (m_Chunks.find({ chunkX, chunkZ })->second->IsActive(blockPos.x, blockPos.y, blockPos.z))
         {
-            printf("collision!!\n");
-            if (deltaPos.y < 0) {
-                m_Player->SetPosition(glm::vec3(pos.x, (int)(pos.y+0.5f), pos.z));
-                m_Player->SetOnGround(true);
-                m_Player->SetDeltaPosition(glm::vec3(deltaPos.x, 0, deltaPos.z));
-            }
-            else if (deltaPos.y > 0) {
-                m_Player->SetPosition(glm::vec3(pos.x, (int)(pos.y - 0.5f), pos.z));
-                m_Player->SetDeltaPosition(glm::vec3(deltaPos.x, 0, deltaPos.z));
-            }/* TODO: COLLISION DETECTION
-            if (deltaPos.x < 0) {
-                m_Player->SetPosition(glm::vec3((int)pos.x, pos.y, pos.z));
-                m_Player->SetDeltaPosition(glm::vec3(0, deltaPos.y, deltaPos.z));
-            }
-            else if (deltaPos.x > 0) {
-                m_Player->SetPosition(glm::vec3((int)pos.x, pos.y, pos.z));
-                m_Player->SetDeltaPosition(glm::vec3(0, deltaPos.y, deltaPos.z));
-            }*/
+            
         }
     }
     else 
-        printf("collision!!\n");
+        printf("Outside!!\n");
 
     m_lastPlayerPos = pos;
 }

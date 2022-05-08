@@ -38,6 +38,7 @@ public:
 	void SetActive(int x, int y, int z, bool activeLevel);
 
 	void Render();
+	void Update(); // TODO: Implement
 	void CheckCollision();
 
 private:

@@ -10,11 +10,13 @@ Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed) :  m_Proj(glm::
     m_OnGround = false;
     m_Pos = pos;
     m_Dimensions = dimensions;
-    m_CamPos = glm::vec3(0.0f, m_Dimensions.y, 0.0f);
+    m_CamPos = glm::vec3(0.0f, m_Dimensions.y - 0.3f, 0.0f);
     m_Speed = speed;
     m_dPos = glm::vec3(0.0f);
     m_Cam = Camera(m_Pos + m_CamPos, m_Speed);
     m_Gravity = 30.0f;
+    m_SpacePressed = false;
+    m_Collision = Collision::NONE;
 }
 
 void Player::SetModelM(const glm::mat4& model) {
@@ -59,16 +61,16 @@ void Player::ProcessScroll(GLFWwindow* window, double& yoffset){
 void Player::Update(float& deltaTime) {
     m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f, 1000.0f);
     m_View = m_Cam.GetViewMatrix();
-    if (m_dPos.x < -0.8)
+    if (m_dPos.x < -0.8f)
         m_dPos.x += 50 * deltaTime;
-    else if (m_dPos.x > 0.8)
+    else if (m_dPos.x > 0.8f)
         m_dPos.x -= 50 * deltaTime;
     else m_dPos.x = 0;
 
     if (flyMode)
-        if (m_dPos.y < -0.8)
+        if (m_dPos.y < -0.8f)
             m_dPos.y += 50 * deltaTime;
-        else if (m_dPos.y > 0.8)
+        else if (m_dPos.y > 0.8f)
             m_dPos.y -= 50 * deltaTime;
         else m_dPos.y = 0;
     else
@@ -77,21 +79,18 @@ void Player::Update(float& deltaTime) {
     
     if (m_dPos.z < -0.8)
         m_dPos.z += 50 * deltaTime;
-    else if (m_dPos.z > 0.8)
+    else if (m_dPos.z > 0.8f)
         m_dPos.z -= 50 * deltaTime;
     else m_dPos.z = 0;
 }
 
 void Player::ProcessMove(GLFWwindow* window, float& deltaTime){
     if (!flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && m_OnGround) {
+      //  m_SpacePressed = true;
         m_dPos.y >= m_Speed*.8f ? m_dPos.y = m_Speed * .8f : m_dPos.y += 80 * deltaTime;
         if (m_dPos.y == m_Speed * .8f) {
             m_OnGround = false;
         }
-    }
-
-    else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
-        m_OnGround = false;
     }
 
     else if (!flyMode && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS && m_OnGround) {
@@ -106,20 +105,26 @@ void Player::ProcessMove(GLFWwindow* window, float& deltaTime){
     else if (flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
         m_dPos.y >= m_Speed ? m_dPos.y = m_Speed : m_dPos.y += 80 * deltaTime;
     }
+
+    else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+        m_OnGround = false;
+       // m_SpacePressed = false;
+    }
+
     //=================================
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+    if (m_Collision != Collision::FRONT && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
         m_dPos.z >= m_Speed ? m_dPos.z = m_Speed : m_dPos.z += 80 * deltaTime;
     } 
 
-    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+    else if (m_Collision != Collision::BACK && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
         m_dPos.z <= -m_Speed ? m_dPos.z = -m_Speed : m_dPos.z -= 80 * deltaTime;
     }
     //=================================
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+    if (m_Collision != Collision::LEFT && glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
         m_dPos.x <= -m_Speed ? m_dPos.x = -m_Speed : m_dPos.x -= 80 * deltaTime;
     }
     
-    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+    else if (m_Collision != Collision::RIGHT && glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
         m_dPos.x >= m_Speed ? m_dPos.x = m_Speed : m_dPos.x += 80 * deltaTime;
     }
 
