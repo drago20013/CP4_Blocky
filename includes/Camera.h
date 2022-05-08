@@ -52,7 +52,7 @@ public:
     }
 
     const glm::vec3& GetPosition() const { return Position; }
-    const glm::vec3& GetForward() const { return -glm::normalize(glm::cross(Right, WorldUp)); }
+    const glm::vec3 GetForward() const { return -glm::normalize(glm::cross(Right, WorldUp)); }
     const glm::vec3& GetRight() const { return Right; }
     const glm::vec3& GetWorldUp() const { return WorldUp; }
     void SetPosition(glm::vec3 newPosition) { Position = newPosition; }
