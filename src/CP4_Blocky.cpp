@@ -21,7 +21,7 @@
 unsigned int SCR_WIDTH = 800;
 unsigned int SCR_HEIGHT = 600;
 float aspectRatio =
-static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT);
+    static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT);
 unsigned int NEW_SCR_WIDTH = SCR_WIDTH;
 unsigned int NEW_SCR_HEIGHT = SCR_HEIGHT;
 bool mouseHidden{};
@@ -62,25 +62,31 @@ int main() {
 
     glfwSetWindowUserPointer(window, player.get());
 
-    auto playerScrollCallback = [](GLFWwindow* window, double xoffset, double yoffset) {
-        if (mouseHidden) static_cast<Player*>(glfwGetWindowUserPointer(window))->ProcessScroll(window, yoffset);
+    auto playerScrollCallback = [](GLFWwindow* window, double xoffset,
+                                   double yoffset) {
+        if (mouseHidden)
+            static_cast<Player*>(glfwGetWindowUserPointer(window))
+                ->ProcessScroll(window, yoffset);
     };
 
-    auto playerMouseCallback = [](GLFWwindow* window, double xposIn, double yposIn) {
-        if (mouseHidden) static_cast<Player*>(glfwGetWindowUserPointer(window))->ProcessMouse(window, xposIn, yposIn);
+    auto playerMouseCallback = [](GLFWwindow* window, double xposIn,
+                                  double yposIn) {
+        if (mouseHidden)
+            static_cast<Player*>(glfwGetWindowUserPointer(window))
+                ->ProcessMouse(window, xposIn, yposIn);
     };
 
     auto keyCallback = [](GLFWwindow* window, int key, int scancode, int action,
-        int mods) {
+                          int mods) {
         if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS) {
             if (!mouseHidden) {
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
                 mouseHidden = true;
-            }
-            else {
+            } else {
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                 mouseHidden = false;
-                static_cast<Player*>(glfwGetWindowUserPointer(window))->SetFirstMouse();
+                static_cast<Player*>(glfwGetWindowUserPointer(window))
+                    ->SetFirstMouse();
             }
         }
 
@@ -88,18 +94,16 @@ int main() {
             if (!wireFrame) {
                 GLCall(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
                 wireFrame = true;
-            }
-            else {
+            } else {
                 GLCall(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
                 wireFrame = false;
             }
-        }  
+        }
 
         if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
             if (!flyMode) {
                 flyMode = true;
-            }
-            else {
+            } else {
                 flyMode = false;
             }
         }
@@ -124,15 +128,19 @@ int main() {
 
     {
         std::unique_ptr<Renderer> render = std::make_unique<Renderer>();
-       
-        std::unique_ptr<WorldSegmnet> segment = std::make_unique<WorldSegmnet>(player);
 
-        for (int x = -64 ;x < 64; x++)
-            for (int y = 0; y < CHUNK_HEIGHT/2; y++)
+        std::unique_ptr<WorldSegmnet> segment =
+            std::make_unique<WorldSegmnet>(player);
+
+        for (int x = -64; x < 64; x++)
+            for (int y = 0; y < CHUNK_HEIGHT / 2; y++)
                 for (int z = -64; z < 64; z++) {
                     segment->Set(x, y, z, BlockType::BlockType_Grass);
                     segment->SetActive(x, y, z, true);
                 }
+        // segment->Set(0, 0, 0, BlockType::BlockType_Grass);
+        // segment->SetActive(0, 0, 0, true);
+
         for (int y = 0; y < CHUNK_HEIGHT; y++) {
             for (int z = -64; z < 64; z++) {
                 segment->Set(63, y, z, BlockType::BlockType_Grass);
@@ -160,21 +168,26 @@ int main() {
             lastTime = currentFrame;
             nbFrames++;
             if (currentFrame - lastFrame >= 2.0) {
-                printf("FPS: %d -> %f ms\n", nbFrames,
-                       1000.0 / (float)nbFrames);
-                printf("Player position: x:%f y:%f z:%f\n", player->GetPosition().x, player->GetPosition().y, player->GetPosition().z);
+                printf("FPS: %d -> %f ms\n", (int)(nbFrames * 0.5f),
+                       2000.0 / (float)nbFrames);
+                printf("Player position: x:%f y:%f z:%f\n",
+                       player->GetPosition().x, player->GetPosition().y,
+                       player->GetPosition().z);
                 nbFrames = 0;
                 lastFrame = currentFrame;
             }
 
             render->Clear();
-  
-            player->Update(deltaTime);
 
-            segment->CheckCollision();
+            if (mouseHidden) {
+                player->ProcessMove(window, deltaTime);
 
-            if (mouseHidden) player->ProcessMove(window, deltaTime);
+                player->Update(deltaTime);
 
+                segment->CheckCollision();
+
+                player->Move(deltaTime);
+            }
             segment->Render();
 
             if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
