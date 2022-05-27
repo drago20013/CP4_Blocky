@@ -19,7 +19,7 @@ Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed)
     m_Acc = glm::vec3(0.0f);
     m_Vel = glm::vec3(0.0f);
     m_Cam = Camera(m_Pos + m_CamPos, m_Speed);
-    m_Gravity = -30.0f;
+    m_Gravity = -10.0f;
     m_SpacePressed = false;
     m_Collisions[(int)Collision::GROUND] = false;
     m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f,
@@ -60,7 +60,7 @@ void Player::ProcessScroll(GLFWwindow* window, double& yoffset) {
     m_Cam.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-//TODO (drago): Redesign, adds acceleration and calculates velocity
+// TODO (drago): Redesign, adds acceleration and calculates velocity
 void Player::Update(float& deltaTime) {
     m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f,
                               1000.0f);
@@ -68,30 +68,36 @@ void Player::Update(float& deltaTime) {
 
     m_LastPos = m_Pos;
 
-    //friction
+    // friction
 
-  /*  if (flyMode)
-        if (m_dAcc.y < -0.8f)
-            m_dAcc.y += 50 * deltaTime;
-        else if (m_dAcc.y > 0.8f)
-            m_dAcc.y -= 50 * deltaTime;
-        else
-            m_dAcc.y = 0;*/
-    if (!m_OnGround) {
-        m_Acc.y += m_Gravity * 1 * deltaTime;
+    /*  if (flyMode)
+          if (m_dAcc.y < -0.8f)
+              m_dAcc.y += 50 * deltaTime;
+          else if (m_dAcc.y > 0.8f)
+              m_dAcc.y -= 50 * deltaTime;
+          else
+              m_dAcc.y = 0;*/
+    if (!flyMode && !m_OnGround) {
+        m_Acc.y += m_Gravity * 3.f * deltaTime;
     }
 
     m_Vel += m_Acc;
-    //TODO (drago): fucking gravity is destroying sth with detection
-    
-    if (m_OnGround) {
-        glm::vec3 friction = 10.f * glm::vec3(-m_Vel.x * 100 * m_Gravity, 0.0f, -m_Vel.z * 100 * m_Gravity);
-        m_Vel += friction;
-    }
+
+    glm::vec3 friction =
+        !flyMode ? 0.2f * glm::vec3(-m_Vel.x, 0.0f, -m_Vel.z) : 0.2f * -m_Vel;
+
+    m_Vel += friction;
 
     m_Acc = glm::vec3(0);
 
-    m_Pos += m_Vel * deltaTime;
+    if (glm::length(m_Vel) > m_Speed) {
+        m_Vel = glm::normalize(m_Vel) * m_Speed;
+    }
+
+    m_Pos += m_Cam.GetForward() * m_Vel.z * deltaTime;
+    m_Pos += m_Cam.GetRight() * m_Vel.x * deltaTime;
+    m_Pos += m_Cam.GetWorldUp() * m_Vel.y * deltaTime;
+
     m_Cam.SetPosition(m_Pos + m_CamPos);
 
     m_OnGround = false;
@@ -102,38 +108,52 @@ void Player::Update(float& deltaTime) {
 }
 
 void Player::Move(float& deltaTime) {
-   /* if (m_Collisions[(int)Collision::GROUND] ||
-        m_Collisions[(int)Collision::UP]) {
-        m_deltaPos.y = 0;
-        m_Acc.y = 0;
-    }
-    if (m_Collisions[(int)Collision::FRONT] ||
-        m_Collisions[(int)Collision::BACK]) {
-        m_deltaPos.z = 0;
-        m_Acc.z = 0;
-    }
-    if (m_Collisions[(int)Collision::LEFT] ||
-        m_Collisions[(int)Collision::RIGHT]) {
-        m_deltaPos.x = 0;
-        m_Acc.x = 0;
-    }
+    /* if (m_Collisions[(int)Collision::GROUND] ||
+         m_Collisions[(int)Collision::UP]) {
+         m_deltaPos.y = 0;
+         m_Acc.y = 0;
+     }
+     if (m_Collisions[(int)Collision::FRONT] ||
+         m_Collisions[(int)Collision::BACK]) {
+         m_deltaPos.z = 0;
+         m_Acc.z = 0;
+     }
+     if (m_Collisions[(int)Collision::LEFT] ||
+         m_Collisions[(int)Collision::RIGHT]) {
+         m_deltaPos.x = 0;
+         m_Acc.x = 0;
+     }
 
-    if (glm::length(m_Vel) > m_Speed) {
-        m_Vel = glm::normalize(m_Vel) * m_Speed;
-    }
+     if (glm::length(m_Vel) > m_Speed) {
+         m_Vel = glm::normalize(m_Vel) * m_Speed;
+     }
 
-    m_Pos += m_Vel * deltaTime;
-    m_Cam.SetPosition(m_Pos + m_CamPos);*/
+     m_Pos += m_Vel * deltaTime;
+     m_Cam.SetPosition(m_Pos + m_CamPos);*/
 }
 
-//TODO (drago): Redesign, ProcessMove adds acceleration
+// TODO (drago): Redesign, ProcessMove adds acceleration
 void Player::ProcessMove(GLFWwindow* window, float& deltaTime) {
+    //=================================
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        m_Acc.z += 80.f * deltaTime;
+    }
+
+    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        m_Acc.z -= 80.f * deltaTime;
+    }
+    //=================================
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        m_Acc.x -= 80.f * deltaTime;
+    }
+
+    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        m_Acc.x += 80.f * deltaTime;
+    }
+
     if (!flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS &&
         m_OnGround) {
-        m_Acc.y += 80.f * deltaTime;
-        if (m_Vel.y == m_Speed * .8f) {
-            m_OnGround = false;
-        }
+        m_Acc.y += 500.f * deltaTime;
     }
 
     else if (!flyMode &&
@@ -144,31 +164,10 @@ void Player::ProcessMove(GLFWwindow* window, float& deltaTime) {
     }
 
     else if (flyMode && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        m_Acc.y -= 10.f * deltaTime;
+        m_Acc.y -= 80.f * deltaTime;
     }
 
     else if (flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        m_Acc.y += 10.f * deltaTime;
-    }
-
-    /*else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
-        m_OnGround = false;
-    }*/
-
-    //=================================
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        m_Acc.z += 10.f * deltaTime;
-    }
-
-    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        m_Acc.z -= 10.f * deltaTime;
-    }
-    //=================================
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        m_Acc.x -= 10.f * deltaTime;
-    }
-
-    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        m_Acc.x += 10.f * deltaTime;
+        m_Acc.y += 80.f * deltaTime;
     }
 }
