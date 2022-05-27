@@ -62,7 +62,7 @@ void Chunk::Update() {
                 if (!m_Blocks[x][y][z].IsActive()) {  // if empty
                     continue;
                 }
-
+                //TODO (drago): Move coordinate of a block to its center.
                 if (x == 0 && !m_Segment->IsActive((m_PosX*CHUNK_SIZE) + x -1,y, (m_PosZ * CHUNK_SIZE) +z) || x > 0 && !m_Blocks[x - 1][y][z].IsActive()) {
                     // View from negative x (right face)
                     m_Vertecies[i++] = { glm::vec3b(x, y, z)        , 8};

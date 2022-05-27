@@ -43,6 +43,5 @@ public:
 
 private:
 	std::shared_ptr<Player> m_Player;
-	glm::vec3 m_lastPlayerPos;
 	std::unordered_map<SegmentPos, Chunk*> m_Chunks;
 };

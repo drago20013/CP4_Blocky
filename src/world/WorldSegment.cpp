@@ -1,8 +1,7 @@
 #include "WorldSegment.h"
 
 WorldSegmnet::WorldSegmnet(std::shared_ptr<Player> player)
-    : m_Player(player),
-      m_lastPlayerPos(m_Player->GetPosition() + m_Player->GetDeltaPosition()) {
+    : m_Player(player) {
     m_Chunks.reserve(SEGMENT_AREA);
 }
 
@@ -74,6 +73,7 @@ void WorldSegmnet::Render() {
         model = glm::translate(glm::mat4(1),
                                glm::vec3(chunk.first.x * CHUNK_SIZE, 0,
                                          chunk.first.z * CHUNK_SIZE));
+        model = glm::translate(model, glm::vec3(-0.5f, 0, -0.5f));
         m_Player->SetModelM(model);
         chunk.second->Render(m_Player->GetMVP());
     }
@@ -81,53 +81,68 @@ void WorldSegmnet::Render() {
 
 // REDO ALL THIS *********************
 void WorldSegmnet::CheckCollision() {
-    glm::vec3 pos = m_Player->GetPosition() + m_Player->GetDeltaPosition();
-    glm::ivec3 blockPos = pos;
-    glm::vec3 direcion = glm::normalize(pos - m_lastPlayerPos);
-    int chunkX = (int)floor((float)pos.x / CHUNK_SIZE);
-    int chunkZ = (int)floor((float)pos.z / CHUNK_SIZE);
+    glm::vec3 newPos = m_Player->GetPosition();
+    glm::vec3 lastPos = m_Player->GetLastPosition();
+    glm::ivec3 blockPos = newPos;
+    glm::vec3 direction = glm::normalize(newPos - lastPos);
+
+    int chunkX = (int)floor((float)newPos.x / CHUNK_SIZE);
+    int chunkZ = (int)floor((float)newPos.z / CHUNK_SIZE);
 
     if (m_Chunks.contains({chunkX, chunkZ})) {
-        if (direcion.y < 0)  // check below
+        if (direction.y < 0)  // check below
         {
             blockPos.x %= CHUNK_SIZE;
             blockPos.y %= CHUNK_HEIGHT;
             blockPos.z %= CHUNK_SIZE;
-
-            printf("pos: x=%f, y=%f, z=%f;\ndeltaPos: x=%f, y=%f, z=%f\n",
-                   pos.x, pos.y, pos.z, m_Player->GetDeltaPosition().x,
-                   m_Player->GetDeltaPosition().y,
-                   m_Player->GetDeltaPosition().z);
+            m_Player->SetOnGround(false);
 
             if (m_Chunks.find({chunkX, chunkZ})
                     ->second->IsActive(blockPos.x, blockPos.y, blockPos.z)) {
-                // printf("block under me is y=%d, my y=%f\n", blockPos.y,
-                // pos.y);
+
                 m_Player->SetOnGround(true);
                 m_Player->SetCollision(Collision::GROUND, true);
-                printf("new Player pos - x:%f, y:%f, z:%f\n", pos.x,
-                       (float)(blockPos.y + 1), pos.z);
-                m_Player->SetPosition(glm::vec3(pos.x, blockPos.y + 1, pos.z));
+                m_Player->SetVelocityX(0.0f);
+                newPos.y = glm::floor(lastPos.y);
             }
         }
 
-        if (direcion.y > 0)  // check above
+        if (direction.y > 0)  // check above
         {
         }
 
-        if (direcion.x > 0)  // check *player height* of blocks at x + 1
+        if (direction.x > 0)  // check *player height* of blocks at x + 1
         {
         }
 
-        if (direcion.x < 0)  // check *player height* of blocks at x - 1
+        if (direction.x < 0)  // check *player height* of blocks at x - 1
         {
         }
 
-        if (direcion.z > 0)  // check *player height* of blocks at z + 1
+        if (direction.z > 0)  // check *player height* of blocks at z + 1
         {
+            //blockPos.x %= CHUNK_SIZE;
+            //blockPos.y %= CHUNK_HEIGHT;
+            //blockPos.z++;
+            //blockPos.z %= CHUNK_SIZE;
+
+            ///*printf("pos: x=%f, y=%f, z=%f;\ndeltaPos: x=%f, y=%f, z=%f\n",
+            //       pos.x, pos.y, pos.z, m_Player->GetDeltaPosition().x,
+            //       m_Player->GetDeltaPosition().y,
+            //       m_Player->GetDeltaPosition().z);*/
+
+            //if (m_Chunks.find({ chunkX, chunkZ })
+            //    ->second->IsActive(blockPos.x, blockPos.y, blockPos.z) && m_Chunks.find({ chunkX, chunkZ })
+            //    ->second->IsActive(blockPos.x, blockPos.y+1, blockPos.z)) {
+            //    // printf("block under me is y=%d, my y=%f\n", blockPos.y,
+            //    // pos.y);
+            //    m_Player->SetCollision(Collision::FRONT, true);
+            //    pos.z = glm::floor(pos.z);
+            //    m_Player->SetPosition(glm::vec3(pos.x, pos.y, pos.z));
+            //}
         }
 
-        if (direcion.z < 0)  // check *player height* of blocks at z - 1
+        if (direction.z < 0)  // check *player height* of blocks at z - 1
         {
         }
 
@@ -164,8 +179,8 @@ void WorldSegmnet::CheckCollision() {
         // glm::vec3(deltaPos.x, 0, deltaPos.z));
         //}
         //}
+
+        m_Player->SetPosition(newPos);
     } else
         printf("Outside!!\n");
-
-    m_lastPlayerPos = pos;
 }

@@ -15,7 +15,7 @@ extern float aspectRatio;
 // LEFT- PLAYER POSITION + X
 // FRONT- PLAYER POSITION + Z
 // BACK- PLAYER POSITION - Z
-enum class Collision { NONE = 0, UP, GROUND, RIGHT, LEFT, FRONT, BACK };
+enum class Collision { UP = 0, GROUND, RIGHT, LEFT, FRONT, BACK };
 
 class Player {
 public:
@@ -39,12 +39,16 @@ public:
     }
 
     const glm::vec3& GetPosition() const { return m_Pos; }
+    const glm::vec3& GetLastPosition() const { return m_LastPos; }
     const glm::vec3 GetForwardVec() const { return m_Cam.GetForward(); }
     const glm::vec3& GetDeltaPosition() const { return m_deltaPos; }
     const glm::vec3& GetDimensions() const { return m_Dimensions; }
 
-    void SetDeltaPosition(glm::vec3 newDeltaPos) { m_dPos = newDeltaPos; }
+    void SetDeltaPosition(glm::vec3 newDeltaPos) { m_Acc = newDeltaPos; }
     void SetPosition(glm::vec3 newPos);
+    void SetVelocityX(float newVelX) { m_Vel.x = newVelX; };
+    void SetVelocityY(float newVelY) { m_Vel.y = newVelY; };
+    void SetVelocityZ(float newVelZ) { m_Vel.z = newVelZ; };
     void SetCamPosition(glm::vec3 newPos);
     void SetOnGround(bool activeLevel) { m_OnGround = activeLevel; }
     void SetCollision(Collision collision, bool level) {
@@ -53,7 +57,9 @@ public:
 
 private:
     glm::vec3 m_Pos;
-    glm::vec3 m_dPos;  // TODO (drago): Rename it to "dForce"
+    glm::vec3 m_LastPos;
+    glm::vec3 m_Acc;
+    glm::vec3 m_Vel;
     glm::vec3 m_deltaPos;
     glm::vec3 m_Dimensions;
 

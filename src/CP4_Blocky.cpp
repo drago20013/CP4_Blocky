@@ -173,6 +173,11 @@ int main() {
                 printf("Player position: x:%f y:%f z:%f\n",
                        player->GetPosition().x, player->GetPosition().y,
                        player->GetPosition().z);
+                printf("deltaPos: x=%f, y=%f, z=%f\nMagnitude: %f\n",
+                    player->GetDeltaPosition().x,
+                    player->GetDeltaPosition().y,
+                    player->GetDeltaPosition().z,
+                    glm::length(player->GetDeltaPosition()));
                 nbFrames = 0;
                 lastFrame = currentFrame;
             }

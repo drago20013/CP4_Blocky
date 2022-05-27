@@ -4,7 +4,6 @@
 
 extern bool flyMode;
 
-// TODO (drago): Przesunac kamere zeby byla na srodku bloku
 Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed)
     : m_Model(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))) {
     m_LastX = SCR_WIDTH / 2.0f;
@@ -13,12 +12,14 @@ Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed)
     m_OnGround = false;
     m_deltaPos = glm::vec3(0);
     m_Pos = pos;
+    m_LastPos = pos;
     m_Dimensions = dimensions;
     m_CamPos = glm::vec3(0.0f, m_Dimensions.y - 0.3f, 0.0f);
     m_Speed = speed;
-    m_dPos = glm::vec3(0.0f);
+    m_Acc = glm::vec3(0.0f);
+    m_Vel = glm::vec3(0.0f);
     m_Cam = Camera(m_Pos + m_CamPos, m_Speed);
-    m_Gravity = 30.0f;
+    m_Gravity = -30.0f;
     m_SpacePressed = false;
     m_Collisions[(int)Collision::GROUND] = false;
     m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f,
@@ -59,74 +60,78 @@ void Player::ProcessScroll(GLFWwindow* window, double& yoffset) {
     m_Cam.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
+//TODO (drago): Redesign, adds acceleration and calculates velocity
 void Player::Update(float& deltaTime) {
     m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f,
                               1000.0f);
     m_View = m_Cam.GetViewMatrix();
-    if (m_dPos.x < -0.8f)
-        m_dPos.x += 50 * deltaTime;
-    else if (m_dPos.x > 0.8f)
-        m_dPos.x -= 50 * deltaTime;
-    else
-        m_dPos.x = 0;
 
-    if (flyMode)
-        if (m_dPos.y < -0.8f)
-            m_dPos.y += 50 * deltaTime;
-        else if (m_dPos.y > 0.8f)
-            m_dPos.y -= 50 * deltaTime;
+    m_LastPos = m_Pos;
+
+    //friction
+
+  /*  if (flyMode)
+        if (m_dAcc.y < -0.8f)
+            m_dAcc.y += 50 * deltaTime;
+        else if (m_dAcc.y > 0.8f)
+            m_dAcc.y -= 50 * deltaTime;
         else
-            m_dPos.y = 0;
-    else if (!m_OnGround) {
-        m_dPos.y <= -m_Speed ? m_dPos.y = -m_Speed
-                             : m_dPos.y += -m_Gravity * deltaTime;
+            m_dAcc.y = 0;*/
+    if (!m_OnGround) {
+        m_Acc.y += m_Gravity * 1 * deltaTime;
     }
 
-    if (m_dPos.z < -0.8)
-        m_dPos.z += 50 * deltaTime;
-    else if (m_dPos.z > 0.8f)
-        m_dPos.z -= 50 * deltaTime;
-    else
-        m_dPos.z = 0;
+    m_Vel += m_Acc;
+    //TODO (drago): fucking gravity is destroying sth with detection
+    
+    if (m_OnGround) {
+        glm::vec3 friction = 10.f * glm::vec3(-m_Vel.x * 100 * m_Gravity, 0.0f, -m_Vel.z * 100 * m_Gravity);
+        m_Vel += friction;
+    }
+
+    m_Acc = glm::vec3(0);
+
+    m_Pos += m_Vel * deltaTime;
+    m_Cam.SetPosition(m_Pos + m_CamPos);
+
+    m_OnGround = false;
 
     for (auto& col : m_Collisions) {
         col = false;
     }
-
-    m_deltaPos = glm::vec3(0);
-
-    m_deltaPos += m_Cam.GetRight() * m_dPos.x * deltaTime;
-    m_deltaPos += m_Cam.GetWorldUp() * m_dPos.y * deltaTime;
-    m_deltaPos += m_Cam.GetForward() * m_dPos.z * deltaTime;
 }
 
 void Player::Move(float& deltaTime) {
-    if (m_Collisions[(int)Collision::GROUND] ||
+   /* if (m_Collisions[(int)Collision::GROUND] ||
         m_Collisions[(int)Collision::UP]) {
         m_deltaPos.y = 0;
-        m_dPos.y = 0;
+        m_Acc.y = 0;
     }
     if (m_Collisions[(int)Collision::FRONT] ||
         m_Collisions[(int)Collision::BACK]) {
         m_deltaPos.z = 0;
-        m_dPos.z = 0;
+        m_Acc.z = 0;
     }
     if (m_Collisions[(int)Collision::LEFT] ||
         m_Collisions[(int)Collision::RIGHT]) {
         m_deltaPos.x = 0;
-        m_dPos.x = 0;
+        m_Acc.x = 0;
     }
 
-    m_Pos += m_deltaPos;
-    m_Cam.SetPosition(m_Pos + m_CamPos);
+    if (glm::length(m_Vel) > m_Speed) {
+        m_Vel = glm::normalize(m_Vel) * m_Speed;
+    }
+
+    m_Pos += m_Vel * deltaTime;
+    m_Cam.SetPosition(m_Pos + m_CamPos);*/
 }
 
+//TODO (drago): Redesign, ProcessMove adds acceleration
 void Player::ProcessMove(GLFWwindow* window, float& deltaTime) {
     if (!flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS &&
         m_OnGround) {
-        m_dPos.y >= m_Speed* .8f ? m_dPos.y = m_Speed* .8f
-                                 : m_dPos.y += 80 * deltaTime;
-        if (m_dPos.y == m_Speed * .8f) {
+        m_Acc.y += 80.f * deltaTime;
+        if (m_Vel.y == m_Speed * .8f) {
             m_OnGround = false;
         }
     }
@@ -134,36 +139,36 @@ void Player::ProcessMove(GLFWwindow* window, float& deltaTime) {
     else if (!flyMode &&
              glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
              m_OnGround) {
-        m_dPos.x *= 0.75f;
-        m_dPos.z *= 0.75f;
+        m_Acc.x *= 0.75f;
+        m_Acc.z *= 0.75f;
     }
 
     else if (flyMode && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        m_dPos.y <= -m_Speed ? m_dPos.y = -m_Speed : m_dPos.y -= 80 * deltaTime;
+        m_Acc.y -= 10.f * deltaTime;
     }
 
     else if (flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        m_dPos.y >= m_Speed ? m_dPos.y = m_Speed : m_dPos.y += 80 * deltaTime;
+        m_Acc.y += 10.f * deltaTime;
     }
 
-    else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+    /*else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
         m_OnGround = false;
-    }
+    }*/
 
     //=================================
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        m_dPos.z >= m_Speed ? m_dPos.z = m_Speed : m_dPos.z += 80 * deltaTime;
+        m_Acc.z += 10.f * deltaTime;
     }
 
     else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        m_dPos.z <= -m_Speed ? m_dPos.z = -m_Speed : m_dPos.z -= 80 * deltaTime;
+        m_Acc.z -= 10.f * deltaTime;
     }
     //=================================
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        m_dPos.x <= -m_Speed ? m_dPos.x = -m_Speed : m_dPos.x -= 80 * deltaTime;
+        m_Acc.x -= 10.f * deltaTime;
     }
 
     else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        m_dPos.x >= m_Speed ? m_dPos.x = m_Speed : m_dPos.x += 80 * deltaTime;
+        m_Acc.x += 10.f * deltaTime;
     }
 }
