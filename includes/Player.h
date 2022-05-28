@@ -28,7 +28,6 @@ public:
     void ProcessMove(GLFWwindow* window, float& deltaTime);
 
     void Update(float& deltaTime);
-    void Move(float& deltaTime);
 
     glm::mat4 GetMVP() { return (m_Proj * m_View * m_Model); }
     void SetModelM(const glm::mat4& model);
@@ -41,8 +40,8 @@ public:
     const glm::vec3& GetPosition() const { return m_Pos; }
     const glm::vec3& GetLastPosition() const { return m_LastPos; }
     const glm::vec3 GetForwardVec() const { return m_Cam.GetForward(); }
-    const glm::vec3& GetDeltaPosition() const { return m_deltaPos; }
     const glm::vec3& GetDimensions() const { return m_Dimensions; }
+    const glm::vec3& GetVelocity() const { return m_Vel; }
 
     void SetDeltaPosition(glm::vec3 newDeltaPos) { m_Acc = newDeltaPos; }
     void SetPosition(glm::vec3 newPos);
@@ -60,7 +59,6 @@ private:
     glm::vec3 m_LastPos;
     glm::vec3 m_Acc;
     glm::vec3 m_Vel;
-    glm::vec3 m_deltaPos;
     glm::vec3 m_Dimensions;
 
     bool m_SpacePressed;

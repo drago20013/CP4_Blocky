@@ -78,11 +78,14 @@ void WorldSegmnet::Render() {
     }
 }
 
-// REDO ALL THIS *********************
 void WorldSegmnet::CheckCollision() {
     glm::vec3 newPos = m_Player->GetPosition();
     glm::vec3 lastPos = m_Player->GetLastPosition();
-    glm::ivec3 blockPos = newPos;
+
+    glm::ivec3 blockPos =
+        glm::vec3(newPos.x < 0 ? newPos.x + 0.5f : newPos.x, newPos.y,
+                  newPos.z < 0 ? newPos.z + 0.5f : newPos.z);
+
     glm::vec3 direction = glm::normalize(newPos - lastPos);
 
     int chunkX = (int)floor((float)newPos.x / CHUNK_SIZE);

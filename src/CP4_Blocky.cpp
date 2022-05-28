@@ -16,6 +16,7 @@
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
 #include "WorldSegment.h"
+#include "glm/geometric.hpp"
 
 // settings
 unsigned int SCR_WIDTH = 800;
@@ -58,7 +59,8 @@ int main() {
         return -1;
     }
 
-    std::shared_ptr<Player> player = std::make_shared<Player>();
+    std::shared_ptr<Player> player = std::make_shared<Player>(
+        glm::vec3(0.0f, 66.0f, 0.0f), glm::vec3(0.8f, 1.8f, 0.8f), 20.0f);
 
     glfwSetWindowUserPointer(window, player.get());
 
@@ -173,11 +175,10 @@ int main() {
                 printf("Player position: x:%f y:%f z:%f\n",
                        player->GetPosition().x, player->GetPosition().y,
                        player->GetPosition().z);
-                printf("deltaPos: x=%f, y=%f, z=%f\nMagnitude: %f\n",
-                    player->GetDeltaPosition().x,
-                    player->GetDeltaPosition().y,
-                    player->GetDeltaPosition().z,
-                    glm::length(player->GetDeltaPosition()));
+                printf("Player velocity: x:%f y:%f z:%f\nMagnitude: %f\n",
+                       player->GetVelocity().x, player->GetVelocity().y,
+                       player->GetVelocity().z,
+                       glm::length(player->GetVelocity()));
                 nbFrames = 0;
                 lastFrame = currentFrame;
             }
@@ -190,8 +191,6 @@ int main() {
                 player->Update(deltaTime);
 
                 segment->CheckCollision();
-
-                player->Move(deltaTime);
             }
             segment->Render();
 
