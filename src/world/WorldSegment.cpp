@@ -82,14 +82,12 @@ void WorldSegmnet::CheckCollision() {
     glm::vec3 newPos = m_Player->GetPosition();
     glm::vec3 lastPos = m_Player->GetLastPosition();
 
-    glm::ivec3 blockPos =
-        glm::vec3(newPos.x < 0 ? newPos.x + 0.5f : newPos.x, newPos.y,
-                  newPos.z < 0 ? newPos.z + 0.5f : newPos.z);
+    glm::ivec3 blockPos = glm::vec3(newPos.x, newPos.y, newPos.z);
 
     glm::vec3 direction = glm::normalize(newPos - lastPos);
 
-    int chunkX = (int)floor((float)newPos.x / CHUNK_SIZE);
-    int chunkZ = (int)floor((float)newPos.z / CHUNK_SIZE);
+    int chunkX = (int)floor((float)lastPos.x / CHUNK_SIZE);
+    int chunkZ = (int)floor((float)lastPos.z / CHUNK_SIZE);
 
     if (m_Chunks.contains({chunkX, chunkZ})) {
         if (direction.y < 0)  // check below
@@ -183,6 +181,5 @@ void WorldSegmnet::CheckCollision() {
         //}
 
         m_Player->SetPosition(newPos);
-    } else
-        printf("Outside!!\n");
+    }
 }

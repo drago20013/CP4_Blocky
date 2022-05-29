@@ -134,9 +134,9 @@ int main() {
         std::unique_ptr<WorldSegmnet> segment =
             std::make_unique<WorldSegmnet>(player);
 
-        for (int x = -64; x < 64; x++)
+        for (int x = -65; x < 65; x++)
             for (int y = 0; y < CHUNK_HEIGHT / 2; y++)
-                for (int z = -64; z < 64; z++) {
+                for (int z = -65; z < 65; z++) {
                     segment->Set(x, y, z, BlockType::BlockType_Grass);
                     segment->SetActive(x, y, z, true);
                 }
@@ -144,7 +144,7 @@ int main() {
         // segment->SetActive(0, 0, 0, true);
 
         for (int y = 0; y < CHUNK_HEIGHT; y++) {
-            for (int z = -64; z < 64; z++) {
+            for (int z = -63; z < 64; z++) {
                 segment->Set(63, y, z, BlockType::BlockType_Grass);
                 segment->SetActive(63, y, z, true);
                 segment->Set(z, y, 63, BlockType::BlockType_Grass);
@@ -179,6 +179,10 @@ int main() {
                        player->GetVelocity().x, player->GetVelocity().y,
                        player->GetVelocity().z,
                        glm::length(player->GetVelocity()));
+                glm::vec3 newPos = player->GetPosition();
+                glm::ivec3 blockPos = glm::vec3(newPos.x, newPos.y, newPos.z);
+                printf("Block position: x:%d y:%d z:%d\n", blockPos.x,
+                       blockPos.y, blockPos.z);
                 nbFrames = 0;
                 lastFrame = currentFrame;
             }
