@@ -26,6 +26,10 @@ public:
 
 	void SetActive(int x, int y, int z, bool activeLevel);
 	bool IsActive(int x, int y, int z);
+	int GetPosX() { return m_PosX; }
+	int GetPosZ() { return m_PosZ; }
+	glm::mat4& GetModel() { return m_Model; }
+	void SetModel(glm::mat4 newModel) { m_Model = newModel; }
 
 	void Update();
 	void Render(const glm::mat4& MVP);
@@ -45,4 +49,5 @@ private:
 	int m_Elements;
 	bool m_Changed;
 
+	glm::mat4 m_Model;
 };

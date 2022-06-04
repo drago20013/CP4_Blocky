@@ -23,7 +23,7 @@ struct std::hash<T>
 	{
 		std::size_t h1 = std::hash<int>{}(t.x);
 		std::size_t h2 = std::hash<int>{}(t.z);
-		return h1 ^ (h2 << 1); // or use boost::hash_combine
+		return h1 ^ (h2 << 1);
 	}
 };
 
@@ -38,10 +38,11 @@ public:
 	void SetActive(int x, int y, int z, bool activeLevel);
 
 	void Render();
-	void Update(); // TODO: Implement
+	void Update();
 	void CheckCollision();
 
 private:
 	std::shared_ptr<Player> m_Player;
 	std::unordered_map<SegmentPos, Chunk*> m_Chunks;
+	std::vector<Chunk*> m_ToRender;
 };

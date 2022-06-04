@@ -60,7 +60,7 @@ int main() {
     }
 
     std::shared_ptr<Player> player = std::make_shared<Player>(
-        glm::vec3(0.0f, 66.0f, 0.0f), glm::vec3(0.8f, 1.8f, 0.8f), 20.0f);
+        glm::vec3(0.0f, 66.0f, 0.0f), glm::vec3(0.4f, 1.8f, 0.4f), 10.0f);
 
     glfwSetWindowUserPointer(window, player.get());
 
@@ -159,6 +159,15 @@ int main() {
         segment->Set(2, 66, 62, BlockType::BlockType_Grass);
         segment->SetActive(2, 66, 62, true);
 
+        segment->Set(0, 64, -2, BlockType::BlockType_Grass);
+        segment->SetActive(0, 64, -2, true);
+
+        segment->Set(0, 65, -1, BlockType::BlockType_Grass);
+        segment->SetActive(0, 65, -1, true);
+
+        segment->Set(0, 66, 0, BlockType::BlockType_Grass);
+        segment->SetActive(0, 66, 0, true);
+
         float lastFrame = 0.0f;
         int nbFrames = 0;
 
@@ -179,10 +188,6 @@ int main() {
                        player->GetVelocity().x, player->GetVelocity().y,
                        player->GetVelocity().z,
                        glm::length(player->GetVelocity()));
-                glm::vec3 newPos = player->GetPosition();
-                glm::ivec3 blockPos = glm::vec3(newPos.x, newPos.y, newPos.z);
-                printf("Block position: x:%d y:%d z:%d\n", blockPos.x,
-                       blockPos.y, blockPos.z);
                 nbFrames = 0;
                 lastFrame = currentFrame;
             }
@@ -195,6 +200,8 @@ int main() {
                 player->Update(deltaTime);
 
                 segment->CheckCollision();
+
+                segment->Update();
             }
             segment->Render();
 

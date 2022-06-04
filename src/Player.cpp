@@ -22,8 +22,6 @@ Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed)
     m_Vel = glm::vec3(0.0f);
     m_Cam = Camera(m_Pos + m_CamPos, m_Speed);
     m_Gravity = -10.0f;
-    m_SpacePressed = false;
-    m_Collisions[(int)Collision::GROUND] = false;
     m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f,
                               1000.0f);
     m_View = m_Cam.GetViewMatrix();
@@ -70,8 +68,9 @@ void Player::Update(float& deltaTime) {
     m_LastPos = m_Pos;
 
     if (!flyMode && !m_OnGround) {
-        m_Acc.y += m_Gravity * 3.f * deltaTime;
+        m_Acc.y += m_Gravity * 1.f * deltaTime;
     }
+
     float r = glm::abs(m_Acc.x);
     if (r < glm::abs(m_Acc.y)) r = glm::abs(m_Acc.y);
     if (r < glm::abs(m_Acc.z)) r = glm::abs(m_Acc.z);
@@ -88,6 +87,11 @@ void Player::Update(float& deltaTime) {
     m_Vel += friction;
 
     m_Acc = glm::vec3(0);
+
+    if (glm::length(m_Vel) > m_Speed) {
+        glm::vec3 tmp = glm::normalize(m_Vel) * m_Speed; 
+        m_Vel = glm::vec3(tmp.x, m_Vel.y, tmp.z);
+    }
 
     m_Pos += m_Cam.GetForward() * m_Vel.z * deltaTime;
     m_Pos += m_Cam.GetRight() * m_Vel.x * deltaTime;
@@ -119,7 +123,7 @@ void Player::ProcessMove(GLFWwindow* window, float& deltaTime) {
 
     if (!flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS &&
         m_OnGround) {
-        m_Acc.y += 500.f * deltaTime;
+        m_Acc.y += 600.f * deltaTime;
     }
 
     else if (!flyMode &&

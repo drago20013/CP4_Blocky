@@ -67,14 +67,24 @@ void WorldSegmnet::SetActive(int x, int y, int z, bool activeLevel) {
 }
 
 void WorldSegmnet::Render() {
-    glm::mat4 model;
+    for (auto& chunk : m_ToRender) {
+        chunk->SetModel(glm::translate(glm::mat4(1), glm::vec3(chunk->GetPosX() * CHUNK_SIZE, 0, chunk->GetPosZ() * CHUNK_SIZE)));
+        chunk->SetModel(glm::translate(chunk->GetModel(), glm::vec3(-0.5f, 0, -0.5f)));
+        m_Player->SetModelM(chunk->GetModel());
+        chunk->Render(m_Player->GetMVP());
+    }
+}
+
+void WorldSegmnet::Update()
+{
+    int playerChunkX = (int)floor((float)m_Player->GetLastPosition().x / CHUNK_SIZE);
+    int playerChunkZ = (int)floor((float)m_Player->GetLastPosition().z / CHUNK_SIZE);
+    m_ToRender.clear();
+    float distance{};
     for (auto& chunk : m_Chunks) {
-        model = glm::translate(glm::mat4(1),
-                               glm::vec3(chunk.first.x * CHUNK_SIZE, 0,
-                                         chunk.first.z * CHUNK_SIZE));
-        model = glm::translate(model, glm::vec3(-0.5f, 0, -0.5f));
-        m_Player->SetModelM(model);
-        chunk.second->Render(m_Player->GetMVP());
+        distance = sqrt((playerChunkX - chunk.second->GetPosX()) * (playerChunkX - chunk.second->GetPosX()) + (playerChunkZ - chunk.second->GetPosZ()) * (playerChunkZ - chunk.second->GetPosZ()));
+        if (distance < 2)
+            m_ToRender.push_back(chunk.second);
     }
 }
 
@@ -82,104 +92,64 @@ void WorldSegmnet::CheckCollision() {
     glm::vec3 newPos = m_Player->GetPosition();
     glm::vec3 lastPos = m_Player->GetLastPosition();
 
-    glm::ivec3 blockPos = glm::vec3(newPos.x, newPos.y, newPos.z);
+    glm::vec3 direction(0);
+    if(glm::length(newPos - lastPos) > 0) direction = glm::normalize(newPos - lastPos);
 
-    glm::vec3 direction = glm::normalize(newPos - lastPos);
-
-    int chunkX = (int)floor((float)lastPos.x / CHUNK_SIZE);
-    int chunkZ = (int)floor((float)lastPos.z / CHUNK_SIZE);
-
-    if (m_Chunks.contains({chunkX, chunkZ})) {
         if (direction.y < 0)  // check below
         {
-            blockPos.x %= CHUNK_SIZE;
-            blockPos.y %= CHUNK_HEIGHT;
-            blockPos.z %= CHUNK_SIZE;
             m_Player->SetOnGround(false);
 
-            if (m_Chunks.find({chunkX, chunkZ})
-                    ->second->IsActive(blockPos.x, blockPos.y, blockPos.z)) {
+            if (IsActive(newPos.x,newPos.y,newPos.z > 0 ? newPos.z +.5f: newPos.z)) {
                 m_Player->SetOnGround(true);
-                m_Player->SetCollision(Collision::GROUND, true);
                 m_Player->SetVelocityY(0.0f);
                 newPos.y = glm::floor(lastPos.y);
+                //printf("Collision going y-\n");
             }
         }
 
         if (direction.y > 0)  // check above
         {
+            if(IsActive(newPos.x, newPos.y+2, newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+                m_Player->SetVelocityY(0.0f);
+                newPos.y = lastPos.y;
+            }
         }
 
-        if (direction.x > 0)  // check *player height* of blocks at x + 1
+        if (direction.x < 0)
         {
+            if (IsActive(newPos.x, newPos.y, newPos.z > 0 ? newPos.z + .5f : newPos.z) || IsActive(newPos.x, newPos.y + 1.0f, newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+                m_Player->SetVelocityX(0.0f);
+                newPos.x = lastPos.x;
+                printf("Collision going x-\n");
+            }
         }
 
-        if (direction.x < 0)  // check *player height* of blocks at x - 1
+        if (direction.x > 0)
         {
+            if (IsActive(newPos.x, newPos.y, newPos.z > 0 ? newPos.z + .5f : newPos.z) || IsActive(newPos.x, newPos.y + 1.0f, newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+                m_Player->SetVelocityX(0.0f);
+                newPos.x = lastPos.x;
+                printf("Collision going x+\n");
+            }
         }
 
-        if (direction.z > 0)  // check *player height* of blocks at z + 1
+        if (direction.z < 0)
         {
-            // blockPos.x %= CHUNK_SIZE;
-            // blockPos.y %= CHUNK_HEIGHT;
-            // blockPos.z++;
-            // blockPos.z %= CHUNK_SIZE;
-
-            ///*printf("pos: x=%f, y=%f, z=%f;\ndeltaPos: x=%f, y=%f, z=%f\n",
-            //       pos.x, pos.y, pos.z, m_Player->GetDeltaPosition().x,
-            //       m_Player->GetDeltaPosition().y,
-            //       m_Player->GetDeltaPosition().z);*/
-
-            // if (m_Chunks.find({ chunkX, chunkZ })
-            //     ->second->IsActive(blockPos.x, blockPos.y, blockPos.z) &&
-            //     m_Chunks.find({ chunkX, chunkZ })
-            //     ->second->IsActive(blockPos.x, blockPos.y+1, blockPos.z)) {
-            //     // printf("block under me is y=%d, my y=%f\n", blockPos.y,
-            //     // pos.y);
-            //     m_Player->SetCollision(Collision::FRONT, true);
-            //     pos.z = glm::floor(pos.z);
-            //     m_Player->SetPosition(glm::vec3(pos.x, pos.y, pos.z));
-            // }
+            if (IsActive(newPos.x, newPos.y, newPos.z > 0 ? newPos.z - .5f : newPos.z) || IsActive(newPos.x, newPos.y+1.0f, newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
+                m_Player->SetVelocityZ(0.0f);
+                newPos.z = lastPos.z;
+                printf("Collision going z-\n");
+            }
         }
 
-        if (direction.z < 0)  // check *player height* of blocks at z - 1
+        if (direction.z > 0)
         {
+            if (IsActive(newPos.x, newPos.y, newPos.z > 0 ? newPos.z - .5f : newPos.z) || IsActive(newPos.x, newPos.y + 1.0f, newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
+                m_Player->SetVelocityZ(0.0f);
+                newPos.z = lastPos.z;
+                printf("Collision going z+\n");
+            }
         }
-
-        // if (deltaPos.y < 0) {
-        //// block under
-        // blockPos.x %= CHUNK_SIZE;
-        // blockPos.y--;
-        // blockPos.y %= CHUNK_HEIGHT;
-        // blockPos.z %= CHUNK_SIZE;
-
-        // m_Player->SetCollision(Collision::GROUND, false);
-
-        // if (m_Chunks.find({chunkX, chunkZ})
-        //->second->IsActive(blockPos.x, blockPos.y, blockPos.z)) {
-        //// printf("collision on y axis\n");
-        // m_Player->SetCollision(Collision::GROUND, true);
-        // m_Player->SetPosition(
-        // glm::vec3(pos.x, (int)(pos.y + 0.5f), pos.z));
-        // m_Player->SetDeltaPosition(
-        // glm::vec3(deltaPos.x, 0, deltaPos.z));
-        //}
-        //} else if (deltaPos.y > 0) {
-        //// block above
-        // blockPos.x %= CHUNK_SIZE;
-        // blockPos.y += m_Player->GetDimensions().y + 0.5f;
-        // blockPos.y %= CHUNK_HEIGHT;
-        // blockPos.z %= CHUNK_SIZE;
-
-        // if (m_Chunks.find({chunkX, chunkZ})
-        //->second->IsActive(blockPos.x, blockPos.y, blockPos.z)) {
-        // m_Player->SetCollision(Collision::UP, true);
-        // m_Player->SetPosition(glm::vec3(pos.x, (int)pos.y, pos.z));
-        // m_Player->SetDeltaPosition(
-        // glm::vec3(deltaPos.x, 0, deltaPos.z));
-        //}
-        //}
 
         m_Player->SetPosition(newPos);
-    }
 }

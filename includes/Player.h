@@ -9,18 +9,10 @@ extern unsigned int SCR_WIDTH;
 extern unsigned int SCR_HEIGHT;
 extern float aspectRatio;
 
-// UP- PLAYER POSITION + HEIGHT
-// DOWN- PLAYER POSITION - 1
-// RIGHT- PLAYER POSISTION - X
-// LEFT- PLAYER POSITION + X
-// FRONT- PLAYER POSITION + Z
-// BACK- PLAYER POSITION - Z
-enum class Collision { UP = 0, GROUND, RIGHT, LEFT, FRONT, BACK };
-
 class Player {
 public:
     Player(glm::vec3 pos = glm::vec3(0.0f, 66.0f, 0.0f),
-           glm::vec3 dimensions = glm::vec3(0.8f, 1.8f, 0.8f),
+           glm::vec3 dimensions = glm::vec3(0.4f, 1.8f, 0.4f),
            float speed = 10.0f);
 
     void ProcessMouse(GLFWwindow* window, double& xposIn, double& yposIn);
@@ -50,9 +42,6 @@ public:
     void SetVelocityZ(float newVelZ) { m_Vel.z = newVelZ; };
     void SetCamPosition(glm::vec3 newPos);
     void SetOnGround(bool activeLevel) { m_OnGround = activeLevel; }
-    void SetCollision(Collision collision, bool level) {
-        m_Collisions[(int)collision] = level;
-    }
 
 private:
     glm::vec3 m_Pos;
@@ -60,9 +49,6 @@ private:
     glm::vec3 m_Acc;
     glm::vec3 m_Vel;
     glm::vec3 m_Dimensions;
-
-    bool m_SpacePressed;
-    bool m_Collisions[7];
 
     bool m_OnGround;
     float m_Speed;
