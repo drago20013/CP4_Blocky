@@ -9,6 +9,7 @@ public:
 	~VertexBuffer();
 
 	void LoadData(const void* data, unsigned int size);
+    void UnloadData();
 
 	void Bind() const override;
 	void Unbind() const override;

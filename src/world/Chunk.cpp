@@ -8,7 +8,7 @@
 
 extern std::filesystem::path g_WorkDir;
 
-Chunk::Chunk(int x, int z, WorldSegmnet* segment)
+Chunk::Chunk(int x, int z, WorldSegment* segment)
     : m_Segment(segment), m_PosX(x),m_PosZ(z), m_Elements(0), m_Changed(true), m_Renderer(), m_WhiteTexture(0xffffffff) {
     m_VBO = std::make_unique<VertexBuffer>();
     m_VAO = std::make_unique<VertexArray>();
@@ -22,7 +22,7 @@ Chunk::Chunk(int x, int z, WorldSegmnet* segment)
 
 Chunk::~Chunk() {
     m_VBO.reset(nullptr);
-    delete[] m_Vertecies;
+    if(m_Vertecies) delete[] m_Vertecies;
 }
 
 BlockType Chunk::Get(int x, int y, int z) const {
@@ -52,6 +52,16 @@ bool Chunk::IsActive(int x, int y, int z)
     return m_Blocks[x][y][z].IsActive();
 }
 
+void Chunk::Unload(){
+    m_VBO->UnloadData();
+    delete []m_Vertecies;
+}
+
+void Chunk::Load(){
+    if(!m_Vertecies)m_Vertecies = new Vertex[CHUNK_VOLUME * 6 * 6];
+    Update();
+}
+
 void Chunk::Update() {
     m_Changed = false;
     int i = 0;
@@ -62,7 +72,6 @@ void Chunk::Update() {
                 if (!m_Blocks[x][y][z].IsActive()) {  // if empty
                     continue;
                 }
-                //TODO (drago): Move coordinate of a block to its center.
                 if (x == 0 && !m_Segment->IsActive((m_PosX*CHUNK_SIZE) + x -1,y, (m_PosZ * CHUNK_SIZE) +z) || x > 0 && !m_Blocks[x - 1][y][z].IsActive()) {
                     // View from negative x (right face)
                     m_Vertecies[i++] = { glm::vec3b(x, y, z)        , 8};
@@ -132,8 +141,6 @@ void Chunk::Update() {
 }
 
 void Chunk::Render(const glm::mat4& MVP) {
-    if (m_Changed) Update();
-
     m_ChunkShader->Bind();
     m_ChunkShader->SetUniformMat4f("u_MVP", MVP);
     m_Renderer.Draw(*m_VAO, *m_ChunkShader, m_Elements);

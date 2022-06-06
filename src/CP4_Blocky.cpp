@@ -131,8 +131,8 @@ int main() {
     {
         std::unique_ptr<Renderer> render = std::make_unique<Renderer>();
 
-        std::unique_ptr<WorldSegmnet> segment =
-            std::make_unique<WorldSegmnet>(player);
+        std::unique_ptr<WorldSegment> segment =
+            std::make_unique<WorldSegment>(player);
 
         for (int x = -65; x < 65; x++)
             for (int y = 0; y < CHUNK_HEIGHT / 2; y++)
@@ -171,6 +171,8 @@ int main() {
         float lastFrame = 0.0f;
         int nbFrames = 0;
 
+                segment->Update();
+            segment->Load();
         // render loop
         // -----------
         while (!glfwWindowShouldClose(window)) {
@@ -193,6 +195,7 @@ int main() {
             }
 
             render->Clear();
+
 
             if (mouseHidden) {
                 player->ProcessMove(window, deltaTime);

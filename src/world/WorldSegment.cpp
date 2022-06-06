@@ -1,14 +1,14 @@
 #include "WorldSegment.h"
 
-WorldSegmnet::WorldSegmnet(std::shared_ptr<Player> player) : m_Player(player) {
+WorldSegment::WorldSegment(std::shared_ptr<Player> player) : m_Player(player) {
     m_Chunks.reserve(SEGMENT_AREA);
 }
 
-WorldSegmnet::~WorldSegmnet() {
+WorldSegment::~WorldSegment() {
     for (auto& chunk : m_Chunks) delete chunk.second;
 }
 
-BlockType WorldSegmnet::Get(int x, int y, int z) const {
+BlockType WorldSegment::Get(int x, int y, int z) const {
     int chunkX = (int)floor((float)x / CHUNK_SIZE);
     int chunkZ = (int)floor((float)z / CHUNK_SIZE);
 
@@ -22,7 +22,7 @@ BlockType WorldSegmnet::Get(int x, int y, int z) const {
         return m_Chunks.find({chunkX, chunkZ})->second->Get(x, y, z);
 }
 
-bool WorldSegmnet::IsActive(int x, int y, int z) const {
+bool WorldSegment::IsActive(int x, int y, int z) const {
     int chunkX = (int)floor((float)x / CHUNK_SIZE);
     int chunkZ = (int)floor((float)z / CHUNK_SIZE);
 
@@ -36,7 +36,7 @@ bool WorldSegmnet::IsActive(int x, int y, int z) const {
         return false;
 }
 
-void WorldSegmnet::Set(int x, int y, int z, BlockType type) {
+void WorldSegment::Set(int x, int y, int z, BlockType type) {
     int chunkX = (int)floor((float)x / CHUNK_SIZE);
     int chunkZ = (int)floor((float)z / CHUNK_SIZE);
 
@@ -51,7 +51,7 @@ void WorldSegmnet::Set(int x, int y, int z, BlockType type) {
     m_Chunks.find({chunkX, chunkZ})->second->Set(x, y, z, type);
 }
 
-void WorldSegmnet::SetActive(int x, int y, int z, bool activeLevel) {
+void WorldSegment::SetActive(int x, int y, int z, bool activeLevel) {
     int chunkX = (int)floor((float)x / CHUNK_SIZE);
     int chunkZ = (int)floor((float)z / CHUNK_SIZE);
 
@@ -66,7 +66,7 @@ void WorldSegmnet::SetActive(int x, int y, int z, bool activeLevel) {
     m_Chunks.find({chunkX, chunkZ})->second->SetActive(x, y, z, activeLevel);
 }
 
-void WorldSegmnet::Render() {
+void WorldSegment::Render() {
     for (auto& chunk : m_ToRender) {
         chunk->SetModel(glm::translate(glm::mat4(1), glm::vec3(chunk->GetPosX() * CHUNK_SIZE, 0, chunk->GetPosZ() * CHUNK_SIZE)));
         chunk->SetModel(glm::translate(chunk->GetModel(), glm::vec3(-0.5f, 0, -0.5f)));
@@ -75,20 +75,36 @@ void WorldSegmnet::Render() {
     }
 }
 
-void WorldSegmnet::Update()
+void WorldSegment::Load(){
+    for (auto& chunk : m_ToLoad) {
+       chunk->Load(); 
+    }
+}
+
+void WorldSegment::Unload(){
+    for (auto& chunk : m_ToUnload) {
+       chunk->Unload(); 
+    }
+}
+
+void WorldSegment::Update()
 {
     int playerChunkX = (int)floor((float)m_Player->GetLastPosition().x / CHUNK_SIZE);
     int playerChunkZ = (int)floor((float)m_Player->GetLastPosition().z / CHUNK_SIZE);
     m_ToRender.clear();
+    m_ToLoad.clear();
     float distance{};
     for (auto& chunk : m_Chunks) {
         distance = sqrt((playerChunkX - chunk.second->GetPosX()) * (playerChunkX - chunk.second->GetPosX()) + (playerChunkZ - chunk.second->GetPosZ()) * (playerChunkZ - chunk.second->GetPosZ()));
         if (distance < 2)
             m_ToRender.push_back(chunk.second);
+
+        if(distance < 4)
+            m_ToLoad.push_back(chunk.second);
     }
 }
 
-void WorldSegmnet::CheckCollision() {
+void WorldSegment::CheckCollision() {
     glm::vec3 newPos = m_Player->GetPosition();
     glm::vec3 lastPos = m_Player->GetLastPosition();
 

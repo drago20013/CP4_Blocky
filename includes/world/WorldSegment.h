@@ -27,10 +27,10 @@ struct std::hash<T>
 	}
 };
 
-class WorldSegmnet {
+class WorldSegment {
 public:
-	WorldSegmnet(std::shared_ptr<Player> player);
-	~WorldSegmnet();
+	WorldSegment(std::shared_ptr<Player> player);
+	~WorldSegment();
 
 	BlockType Get(int x, int y, int z) const;
 	bool IsActive(int x, int y, int z) const;
@@ -38,6 +38,8 @@ public:
 	void SetActive(int x, int y, int z, bool activeLevel);
 
 	void Render();
+    void Load();
+    void Unload();
 	void Update();
 	void CheckCollision();
 
@@ -45,4 +47,6 @@ private:
 	std::shared_ptr<Player> m_Player;
 	std::unordered_map<SegmentPos, Chunk*> m_Chunks;
 	std::vector<Chunk*> m_ToRender;
+    std::vector<Chunk*> m_ToLoad;
+	std::vector<Chunk*> m_ToUnload;
 };
