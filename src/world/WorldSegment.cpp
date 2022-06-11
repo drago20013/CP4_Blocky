@@ -68,39 +68,44 @@ void WorldSegment::SetActive(int x, int y, int z, bool activeLevel) {
 
 void WorldSegment::Render() {
     for (auto& chunk : m_ToRender) {
-        chunk->SetModel(glm::translate(glm::mat4(1), glm::vec3(chunk->GetPosX() * CHUNK_SIZE, 0, chunk->GetPosZ() * CHUNK_SIZE)));
-        chunk->SetModel(glm::translate(chunk->GetModel(), glm::vec3(-0.5f, 0, -0.5f)));
+        chunk->SetModel(glm::translate(
+            glm::mat4(1), glm::vec3(chunk->GetPosX() * CHUNK_SIZE, 0,
+                                    chunk->GetPosZ() * CHUNK_SIZE)));
+        chunk->SetModel(
+            glm::translate(chunk->GetModel(), glm::vec3(-0.5f, 0, -0.5f)));
         m_Player->SetModelM(chunk->GetModel());
         chunk->Render(m_Player->GetMVP());
     }
 }
 
-void WorldSegment::Load(){
+void WorldSegment::Load() {
     for (auto& chunk : m_ToLoad) {
-       chunk->Load(); 
+        chunk->Load();
     }
 }
 
-void WorldSegment::Unload(){
+void WorldSegment::Unload() {
     for (auto& chunk : m_ToUnload) {
-       chunk->Unload(); 
+        chunk->Unload();
     }
 }
 
-void WorldSegment::Update()
-{
-    int playerChunkX = (int)floor((float)m_Player->GetLastPosition().x / CHUNK_SIZE);
-    int playerChunkZ = (int)floor((float)m_Player->GetLastPosition().z / CHUNK_SIZE);
+void WorldSegment::Update() {
+    int playerChunkX =
+        (int)floor((float)m_Player->GetLastPosition().x / CHUNK_SIZE);
+    int playerChunkZ =
+        (int)floor((float)m_Player->GetLastPosition().z / CHUNK_SIZE);
     m_ToRender.clear();
     m_ToLoad.clear();
     float distance{};
     for (auto& chunk : m_Chunks) {
-        distance = sqrt((playerChunkX - chunk.second->GetPosX()) * (playerChunkX - chunk.second->GetPosX()) + (playerChunkZ - chunk.second->GetPosZ()) * (playerChunkZ - chunk.second->GetPosZ()));
-        if (distance < 2)
-            m_ToRender.push_back(chunk.second);
+        distance = sqrt((playerChunkX - chunk.second->GetPosX()) *
+                            (playerChunkX - chunk.second->GetPosX()) +
+                        (playerChunkZ - chunk.second->GetPosZ()) *
+                            (playerChunkZ - chunk.second->GetPosZ()));
+        if (distance < 2) m_ToRender.push_back(chunk.second);
 
-        if(distance < 4)
-            m_ToLoad.push_back(chunk.second);
+        if (distance < 15) m_ToLoad.push_back(chunk.second);
     }
 }
 
@@ -109,63 +114,74 @@ void WorldSegment::CheckCollision() {
     glm::vec3 lastPos = m_Player->GetLastPosition();
 
     glm::vec3 direction(0);
-    if(glm::length(newPos - lastPos) > 0) direction = glm::normalize(newPos - lastPos);
+    if (glm::length(newPos - lastPos) > 0)
+        direction = glm::normalize(newPos - lastPos);
 
-        if (direction.y < 0)  // check below
-        {
-            m_Player->SetOnGround(false);
+    if (direction.y < 0)  // check below
+    {
+        m_Player->SetOnGround(false);
 
-            if (IsActive(newPos.x,newPos.y,newPos.z > 0 ? newPos.z +.5f: newPos.z)) {
-                m_Player->SetOnGround(true);
-                m_Player->SetVelocityY(0.0f);
-                newPos.y = glm::floor(lastPos.y);
-                //printf("Collision going y-\n");
-            }
+        if (IsActive(newPos.x, newPos.y,
+                     newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+            m_Player->SetOnGround(true);
+            m_Player->SetVelocityY(0.0f);
+            newPos.y = glm::floor(lastPos.y);
+            // printf("Collision going y-\n");
         }
+    }
 
-        if (direction.y > 0)  // check above
-        {
-            if(IsActive(newPos.x, newPos.y+2, newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
-                m_Player->SetVelocityY(0.0f);
-                newPos.y = lastPos.y;
-            }
+    if (direction.y > 0)  // check above
+    {
+        if (IsActive(newPos.x, newPos.y + 2,
+                     newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+            m_Player->SetVelocityY(0.0f);
+            newPos.y = lastPos.y;
         }
+    }
 
-        if (direction.x < 0)
-        {
-            if (IsActive(newPos.x, newPos.y, newPos.z > 0 ? newPos.z + .5f : newPos.z) || IsActive(newPos.x, newPos.y + 1.0f, newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
-                m_Player->SetVelocityX(0.0f);
-                newPos.x = lastPos.x;
-                printf("Collision going x-\n");
-            }
+    if (direction.x < 0) {
+        if (IsActive(newPos.x, newPos.y,
+                     newPos.z > 0 ? newPos.z + .5f : newPos.z) ||
+            IsActive(newPos.x, newPos.y + 1.0f,
+                     newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+            m_Player->SetVelocityX(0.0f);
+            newPos.x = lastPos.x;
+            printf("Collision going x-\n");
         }
+    }
 
-        if (direction.x > 0)
-        {
-            if (IsActive(newPos.x, newPos.y, newPos.z > 0 ? newPos.z + .5f : newPos.z) || IsActive(newPos.x, newPos.y + 1.0f, newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
-                m_Player->SetVelocityX(0.0f);
-                newPos.x = lastPos.x;
-                printf("Collision going x+\n");
-            }
+    if (direction.x > 0) {
+        if (IsActive(newPos.x, newPos.y,
+                     newPos.z > 0 ? newPos.z + .5f : newPos.z) ||
+            IsActive(newPos.x, newPos.y + 1.0f,
+                     newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+            m_Player->SetVelocityX(0.0f);
+            newPos.x = lastPos.x;
+            printf("Collision going x+\n");
         }
+    }
 
-        if (direction.z < 0)
-        {
-            if (IsActive(newPos.x, newPos.y, newPos.z > 0 ? newPos.z - .5f : newPos.z) || IsActive(newPos.x, newPos.y+1.0f, newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
-                m_Player->SetVelocityZ(0.0f);
-                newPos.z = lastPos.z;
-                printf("Collision going z-\n");
-            }
+    if (direction.z < 0) {
+        if (IsActive(newPos.x, newPos.y,
+                     newPos.z > 0 ? newPos.z - .5f : newPos.z) ||
+            IsActive(newPos.x, newPos.y + 1.0f,
+                     newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
+            m_Player->SetVelocityZ(0.0f);
+            newPos.z = lastPos.z;
+            printf("Collision going z-\n");
         }
+    }
 
-        if (direction.z > 0)
-        {
-            if (IsActive(newPos.x, newPos.y, newPos.z > 0 ? newPos.z - .5f : newPos.z) || IsActive(newPos.x, newPos.y + 1.0f, newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
-                m_Player->SetVelocityZ(0.0f);
-                newPos.z = lastPos.z;
-                printf("Collision going z+\n");
-            }
+    if (direction.z > 0) {
+        if (IsActive(newPos.x, newPos.y,
+                     newPos.z > 0 ? newPos.z - .5f : newPos.z) ||
+            IsActive(newPos.x, newPos.y + 1.0f,
+                     newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
+            m_Player->SetVelocityZ(0.0f);
+            newPos.z = lastPos.z;
+            printf("Collision going z+\n");
         }
+    }
 
-        m_Player->SetPosition(newPos);
+    m_Player->SetPosition(newPos);
 }

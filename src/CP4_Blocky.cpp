@@ -4,9 +4,11 @@
 // clang-format on
 
 #include <filesystem>
+#include <future>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <thread>
 
 #include "Player.h"
 #include "Renderer.h"
@@ -171,8 +173,6 @@ int main() {
         float lastFrame = 0.0f;
         int nbFrames = 0;
 
-                segment->Update();
-            segment->Load();
         // render loop
         // -----------
         while (!glfwWindowShouldClose(window)) {
@@ -196,7 +196,6 @@ int main() {
 
             render->Clear();
 
-
             if (mouseHidden) {
                 player->ProcessMove(window, deltaTime);
 
@@ -205,6 +204,7 @@ int main() {
                 segment->CheckCollision();
 
                 segment->Update();
+                segment->Load();
             }
             segment->Render();
 
