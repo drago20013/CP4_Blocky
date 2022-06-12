@@ -62,7 +62,7 @@ int main() {
     }
 
     std::shared_ptr<Player> player = std::make_shared<Player>(
-        glm::vec3(0.0f, 66.0f, 0.0f), glm::vec3(0.4f, 1.8f, 0.4f), 10.0f);
+        glm::vec3(0.0f, 128.0f, 0.0f), glm::vec3(0.4f, 1.8f, 0.4f), 10.0f);
 
     glfwSetWindowUserPointer(window, player.get());
 
@@ -136,40 +136,6 @@ int main() {
         std::unique_ptr<WorldSegment> segment =
             std::make_unique<WorldSegment>(player);
 
-        for (int x = -65; x < 65; x++)
-            for (int y = 0; y < CHUNK_HEIGHT / 2; y++)
-                for (int z = -65; z < 65; z++) {
-                    segment->Set(x, y, z, BlockType::BlockType_Grass);
-                    segment->SetActive(x, y, z, true);
-                }
-        // segment->Set(0, 0, 0, BlockType::BlockType_Grass);
-        // segment->SetActive(0, 0, 0, true);
-
-        for (int y = 0; y < CHUNK_HEIGHT; y++) {
-            for (int z = -63; z < 64; z++) {
-                segment->Set(63, y, z, BlockType::BlockType_Grass);
-                segment->SetActive(63, y, z, true);
-                segment->Set(z, y, 63, BlockType::BlockType_Grass);
-                segment->SetActive(z, y, 63, true);
-            }
-        }
-
-        segment->Set(0, 66, 62, BlockType::BlockType_Grass);
-        segment->SetActive(0, 66, 62, true);
-        segment->Set(1, 66, 62, BlockType::BlockType_Grass);
-        segment->SetActive(1, 66, 62, true);
-        segment->Set(2, 66, 62, BlockType::BlockType_Grass);
-        segment->SetActive(2, 66, 62, true);
-
-        segment->Set(0, 64, -2, BlockType::BlockType_Grass);
-        segment->SetActive(0, 64, -2, true);
-
-        segment->Set(0, 65, -1, BlockType::BlockType_Grass);
-        segment->SetActive(0, 65, -1, true);
-
-        segment->Set(0, 66, 0, BlockType::BlockType_Grass);
-        segment->SetActive(0, 66, 0, true);
-
         float lastFrame = 0.0f;
         int nbFrames = 0;
 
@@ -201,10 +167,11 @@ int main() {
 
                 player->Update(deltaTime);
 
+                segment->GenereteSegment();
+
                 segment->CheckCollision();
 
                 segment->Update();
-                segment->Load();
             }
             segment->Render();
 

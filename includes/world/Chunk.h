@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <FastNoise/FastNoise.h>
 
 #include "../VertexBuffer.h"
 #include "../VertexArray.h"
@@ -25,7 +26,11 @@ public:
 	void Set(int x, int y, int z, BlockType type);
 
 	void SetActive(int x, int y, int z, bool activeLevel);
+	void SetChanged(bool changedLevel);
 	bool IsActive(int x, int y, int z);
+	bool IsLoaded() { 
+		return m_Loaded; 
+	};
 	int GetPosX() { return m_PosX; }
 	int GetPosZ() { return m_PosZ; }
 	glm::mat4& GetModel() { return m_Model; }
@@ -34,6 +39,7 @@ public:
 	void Update();
     void Unload();
     void Load();
+	void Generate();
 	void Render(const glm::mat4& MVP);
 
 private:
@@ -50,6 +56,9 @@ private:
 	Texture m_WhiteTexture;
 	int m_Elements;
 	bool m_Changed;
+	bool m_Loaded;
+	FastNoise::SmartNode<> m_rootNoiseNode;
+	std::vector<float> m_noiseOutput;
 
 	glm::mat4 m_Model;
 };

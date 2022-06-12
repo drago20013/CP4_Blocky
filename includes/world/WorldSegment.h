@@ -41,7 +41,9 @@ public:
     void Load();
     void Unload();
 	void Update();
+	void Generate();
 	void CheckCollision();
+	void GenereteSegment();
 
 private:
 	std::shared_ptr<Player> m_Player;
@@ -49,4 +51,5 @@ private:
 	std::vector<Chunk*> m_ToRender;
     std::vector<Chunk*> m_ToLoad;
 	std::vector<Chunk*> m_ToUnload;
+	std::vector<Chunk*> m_ToGenerate;
 };
