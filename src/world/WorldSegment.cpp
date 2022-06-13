@@ -82,7 +82,6 @@ void WorldSegment::Render() {
 
 void WorldSegment::Load() {
     int X{}, Z{};
-    
     for (auto& chunk : m_ToLoad) {
             X = chunk->GetPosX();
             Z = chunk->GetPosZ();
@@ -100,7 +99,7 @@ void WorldSegment::Unload() {
         threads.emplace_back(std::thread([&chunk]() {chunk->Unload(); }));
     }
     for (auto& t : threads) {
-        t.join();
+        t.detach();
     }
 }
 
@@ -111,6 +110,9 @@ void WorldSegment::Generate() {
     }
     for (auto& chunk : m_ToRegenerate) {
         threads.emplace_back(std::jthread([&chunk]() {chunk->Generate(); }));
+    }
+    for (auto& t:threads){
+        t.detach();
     }
 }
 
