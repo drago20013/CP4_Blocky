@@ -3,6 +3,7 @@
 #include <cstring>
 #include <filesystem>
 
+
 #include "../../includes/world/WorldSegment.h"
 #include "Block.h"
 
@@ -100,6 +101,7 @@ void Chunk::Load(){
 }
 
 void Chunk::Generate() {
+    std::lock_guard<std::mutex> guard(m_VerteciesMutex);
     m_Changed = false;
     int i = 0;
     for (int x = 0; x < CHUNK_SIZE; x++) {
@@ -173,10 +175,10 @@ void Chunk::Generate() {
     }
 
     m_Elements = i;
-    m_VBO->LoadData(m_Vertecies, m_Elements * 4);
 }
 
 void Chunk::Update() {
+    m_VBO->LoadData(m_Vertecies, m_Elements * 4);
     m_VAO->AddBuffer(*m_VBO, *m_Layout);
 }
 

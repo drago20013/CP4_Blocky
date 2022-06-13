@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <memory>
 #include <FastNoise/FastNoise.h>
+#include <mutex>
 
 #include "../VertexBuffer.h"
 #include "../VertexArray.h"
@@ -59,6 +60,7 @@ private:
 	bool m_Loaded;
 	FastNoise::SmartNode<> m_rootNoiseNode;
 	std::vector<float> m_noiseOutput;
+	std::mutex m_VerteciesMutex;
 
 	glm::mat4 m_Model;
 };

@@ -2,6 +2,7 @@
 #include "Chunk.h"
 #include "../Player.h"
 #include <unordered_map>
+#include <mutex>
 
 #define SEGMENT_SIZE 16
 #define SEGMENT_AREA SEGMENT_SIZE*SEGMENT_SIZE
@@ -52,4 +53,6 @@ private:
     std::vector<Chunk*> m_ToLoad;
 	std::vector<Chunk*> m_ToUnload;
 	std::vector<Chunk*> m_ToGenerate;
+	std::vector<Chunk*> m_ToRegenerate;
+	std::mutex m_RegenerateMutex;
 };
