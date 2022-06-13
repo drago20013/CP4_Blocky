@@ -10,7 +10,7 @@
 extern std::filesystem::path g_WorkDir;
 
 Chunk::Chunk(int x, int z, WorldSegment* segment)
-    : m_Segment(segment), m_PosX(x),m_PosZ(z), m_Elements(0), m_Changed(true), m_Renderer(), m_WhiteTexture(0xffffffff) {
+    : m_Segment(segment), m_PosX(x), m_PosZ(z), m_Elements(0), m_Changed(true), m_Renderer(), m_WhiteTexture(0xffffffff) {
     m_VBO = std::make_unique<VertexBuffer>();
     m_VAO = std::make_unique<VertexArray>();
     m_ChunkShader = std::make_unique<Shader>(
@@ -25,12 +25,14 @@ Chunk::Chunk(int x, int z, WorldSegment* segment)
     m_noiseOutput.resize(CHUNK_AREA);
 
     // Generate a 16 x 16 area of noise
-    m_rootNoiseNode->GenUniformGrid2D(m_noiseOutput.data(), m_PosX * CHUNK_SIZE, m_PosZ * CHUNK_SIZE, CHUNK_SIZE , CHUNK_SIZE, 0.2f, 1338);
+    m_rootNoiseNode->GenUniformGrid2D(m_noiseOutput.data(), m_PosZ * CHUNK_SIZE, m_PosX * CHUNK_SIZE, CHUNK_SIZE , CHUNK_SIZE, 0.2f, 1338);
+    
     for (auto& n : m_noiseOutput) {
-        n = (int)(((n * CHUNK_HEIGHT) + CHUNK_HEIGHT*0.5)+.5);
+        n = (int)(((n * CHUNK_HEIGHT*0.5) + CHUNK_HEIGHT*0.5)+.5);
         if (n < 1) n = 1;
         else if (n > CHUNK_HEIGHT) n = CHUNK_HEIGHT;
     }
+
     int index = 0;
 }
 
@@ -78,6 +80,7 @@ void Chunk::Unload(){
         m_Vertecies = nullptr;
     };
     m_Loaded = false;
+
 }
 
 void Chunk::Load(){
@@ -85,24 +88,23 @@ void Chunk::Load(){
     if(m_Vertecies == nullptr) m_Vertecies = new Vertex[CHUNK_VOLUME * 6 * 6];
     if (!m_Loaded) {
         int height;
+        
         for (int x = 0; x < CHUNK_SIZE; x++)
-            for (int z = 0; z < CHUNK_SIZE; z++)
-            {
-                height = m_noiseOutput[z * CHUNK_SIZE  + x];
-                for (int y = 0; y < height; y++) {
-
-                    Set(x, y, z, BlockType::BlockType_Grass);
-                    SetActive(x, y, z, true);
-
+            for (int y = 0; y < CHUNK_HEIGHT; y++) {
+                for (int z = 0; z < CHUNK_SIZE; z++)
+                {
+                    if (y < m_noiseOutput[x * CHUNK_SIZE + z]) {
+                        Set(x, y, z, BlockType::BlockType_Grass);
+                        SetActive(x, y, z, true);
+                    }
                 }
             }
-    }
+    } 
     m_Loaded = true;
 }
 
 void Chunk::Generate() {
     std::lock_guard<std::mutex> guard(m_VerteciesMutex);
-    m_Changed = false;
     int i = 0;
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int y = 0; y < CHUNK_HEIGHT; y++) {
@@ -178,12 +180,14 @@ void Chunk::Generate() {
 }
 
 void Chunk::Update() {
+    
     m_VBO->LoadData(m_Vertecies, m_Elements * 4);
     m_VAO->AddBuffer(*m_VBO, *m_Layout);
+    m_Changed = false;
 }
 
 void Chunk::Render(const glm::mat4& MVP) {
-    if (m_Loaded) Update();
+    if (m_Loaded&&m_Changed) Update();
     m_ChunkShader->Bind();
     m_ChunkShader->SetUniformMat4f("u_MVP", MVP);
     m_Renderer.Draw(*m_VAO, *m_ChunkShader, m_Elements);

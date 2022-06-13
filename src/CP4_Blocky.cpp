@@ -62,7 +62,7 @@ int main() {
     }
 
     std::shared_ptr<Player> player = std::make_shared<Player>(
-        glm::vec3(0.0f, 128.0f, 0.0f), glm::vec3(0.4f, 1.8f, 0.4f), 10.0f);
+        glm::vec3(0.0f, 128.0f, 0.0f), glm::vec3(0.4f, 1.8f, 0.4f), 50.0f);
 
     glfwSetWindowUserPointer(window, player.get());
 

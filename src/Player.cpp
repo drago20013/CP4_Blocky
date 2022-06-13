@@ -106,19 +106,19 @@ void Player::Update(float& deltaTime) {
 void Player::ProcessMove(GLFWwindow* window, float& deltaTime) {
     //=================================
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        m_Acc.z += 200.f * deltaTime;
+        m_Acc.z += 600.f * deltaTime;
     }
 
     else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        m_Acc.z -= 200.f * deltaTime;
+        m_Acc.z -= 600.f * deltaTime;
     }
     //=================================
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        m_Acc.x -= 200.f * deltaTime;
+        m_Acc.x -= 600.f * deltaTime;
     }
 
     else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        m_Acc.x += 200.f * deltaTime;
+        m_Acc.x += 600.f * deltaTime;
     }
 
     if (!flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS &&

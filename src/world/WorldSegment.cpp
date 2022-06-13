@@ -1,6 +1,7 @@
 #include "WorldSegment.h"
 
 #include <thread>
+#include <future>
 
 WorldSegment::WorldSegment(std::shared_ptr<Player> player) : m_Player(player) {
     m_Chunks.reserve(SEGMENT_AREA);
@@ -82,38 +83,43 @@ void WorldSegment::Render() {
 
 void WorldSegment::Load() {
     int X{}, Z{};
+    //std::vector<std::jthread> threads;
     for (auto& chunk : m_ToLoad) {
+        std::async(std::launch::async, [&]() {
             X = chunk->GetPosX();
             Z = chunk->GetPosZ();
             chunk->Load();
-            if (m_Chunks.contains({ X - 1, Z }) && m_Chunks[{X - 1, Z}]->IsLoaded()) m_ToRegenerate.push_back(m_Chunks[{X-1, Z}]);
-            if (m_Chunks.contains({ X + 1, Z }) && m_Chunks[{X + 1, Z}]->IsLoaded()) m_ToRegenerate.push_back(m_Chunks[{X+1, Z}]);
-            if (m_Chunks.contains({ X, Z - 1 }) && m_Chunks[{X, Z - 1}]->IsLoaded()) m_ToRegenerate.push_back(m_Chunks[{X, Z-1}]);
-            if (m_Chunks.contains({ X, Z + 1 }) && m_Chunks[{X, Z + 1}]->IsLoaded()) m_ToRegenerate.push_back(m_Chunks[{X, Z+1}]);
+            });
     }
+  /*  for (auto& t : threads) {
+        t.detach();
+    }*/
 }
 
 void WorldSegment::Unload() {
-    std::vector<std::thread> threads;
+    std::vector<std::jthread> threads;
     for (auto& chunk : m_ToUnload) {
-        threads.emplace_back(std::thread([&chunk]() {chunk->Unload(); }));
+        //threads.emplace_back([&]() {chunk->Unload(); });
+        std::async(std::launch::async, [&]() {chunk->Unload(); });
     }
-    for (auto& t : threads) {
+    /*for (auto& t : threads) {
         t.detach();
-    }
+    }*/
 }
 
 void WorldSegment::Generate() {
-    std::vector<std::jthread> threads;
+    //std::vector<std::jthread> threads;
     for (auto& chunk : m_ToGenerate) {
-        threads.emplace_back(std::jthread([&chunk]() {chunk->Generate(); }));
+       //threads.emplace_back([&]() {chunk->Generate(); });
+       std::async(std::launch::async, [&]() {chunk->Generate(); });
     }
-    for (auto& chunk : m_ToRegenerate) {
-        threads.emplace_back(std::jthread([&chunk]() {chunk->Generate(); }));
-    }
-    for (auto& t:threads){
+    //for (auto& chunk : m_ToRegenerate) {
+    //    //threads.emplace_back([&]() {chunk->Generate(); });
+    //    std::async(std::launch::async, [&]() {chunk->Generate(); });
+    //}
+    /*for (auto& t:threads){
         t.detach();
-    }
+    }*/
 }
 
 void WorldSegment::Update() {
@@ -125,19 +131,24 @@ void WorldSegment::Update() {
     m_ToLoad.clear();
     m_ToUnload.clear();
     m_ToGenerate.clear();
-    m_ToRegenerate.clear();
     float distance{};
-    
+    int i{ 2 }, k{ 1 };
     for (auto& chunk : m_Chunks) {
         distance = sqrt((playerChunkX - chunk.second->GetPosX()) *
                             (playerChunkX - chunk.second->GetPosX()) +
                         (playerChunkZ - chunk.second->GetPosZ()) *
                             (playerChunkZ - chunk.second->GetPosZ()));
         
-        if (distance > 35 && chunk.second->IsLoaded()) m_ToUnload.push_back(chunk.second);
-        if (distance < 20 ) {
-            if (chunk.second->IsLoaded()) m_ToRender.push_back(chunk.second);
-            else {
+        if (i && distance > 11 && chunk.second->IsLoaded()) {
+            i--;
+            m_ToUnload.push_back(chunk.second);
+        }
+        if (distance < 10 ) {
+            if (chunk.second->IsLoaded()) {
+                m_ToRender.push_back(chunk.second); 
+            }
+            else if(k && !chunk.second->IsLoaded()) {
+                k--;
                 m_ToLoad.push_back(chunk.second);
                 m_ToGenerate.push_back(chunk.second);
             }
