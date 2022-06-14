@@ -75,11 +75,15 @@ void WorldSegment::SetActive(int x, int y, int z, bool activeLevel) {
 
 void WorldSegment::Render() {
     for (auto& chunk : m_ToRender) {
+        std::async(std::launch::async, [&]() {chunk->ReMesh(); });
+    }
+
+    for (auto& chunk : m_ToRender) {
         chunk->SetModel(glm::translate(
             glm::mat4(1), glm::vec3(chunk->GetPosX() * CHUNK_SIZE, 0,
                                     chunk->GetPosZ() * CHUNK_SIZE)));
-        chunk->SetModel(
-            glm::translate(chunk->GetModel(), glm::vec3(-0.5f, 0, -0.5f)));
+        /*chunk->SetModel(
+            glm::translate(chunk->GetModel(), glm::vec3(-0.5f, 0, -0.5f)));*/
         m_Player->SetModelM(chunk->GetModel());
         chunk->Render(m_Player->GetMVP());
     }
@@ -124,14 +128,14 @@ void WorldSegment::Update() {
     m_ToUnload.clear();
     m_ToGenerate.clear();
     float distance{};
-    int i{ 8 }, k{ 4 };
+    int i{ 4 }, k{ 2 };
     for (auto& chunk : m_Chunks) {
         distance = sqrt((playerChunkX - chunk.second->GetPosX()) *
                             (playerChunkX - chunk.second->GetPosX()) +
                         (playerChunkZ - chunk.second->GetPosZ()) *
                             (playerChunkZ - chunk.second->GetPosZ()));
         
-        if (i && distance > 21 && chunk.second->IsLoaded()) {
+        if (i && distance > 40 && chunk.second->IsLoaded()) {
             i--;
             m_ToUnload.push_back(chunk.second);
         }

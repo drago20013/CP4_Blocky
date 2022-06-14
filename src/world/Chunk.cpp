@@ -67,6 +67,14 @@ bool Chunk::IsActive(int x, int y, int z)
     return m_Blocks[x][y][z].IsActive();
 }
 
+void Chunk::ReMesh()
+{
+    if (m_Changed) {
+        m_Vertecies.clear();
+        Generate();
+    }
+}
+
 void Chunk::Unload(){
     //TODO(drago): Save chunk on disc(maybe)
     m_Vertecies.clear();
@@ -175,10 +183,6 @@ void Chunk::Update() {
 }
 
 void Chunk::Render(const glm::mat4& MVP) {
-    if (m_Changed) {
-        m_Vertecies.clear();
-        Generate();
-    }
     if (m_Loaded && !m_Changed) {
         Update();
     }

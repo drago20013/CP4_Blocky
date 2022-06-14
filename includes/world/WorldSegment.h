@@ -53,6 +53,7 @@ private:
     std::vector<Chunk*> m_ToLoad;
 	std::vector<Chunk*> m_ToUnload;
 	std::vector<Chunk*> m_ToGenerate;
-	std::vector<Chunk*> m_ToRegenerate;
-	std::mutex m_RegenerateMutex;
+	std::mutex m_LoadMutex;
+
+	std::shared_ptr<Shader> m_ChunkShader;
 };

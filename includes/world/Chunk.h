@@ -20,7 +20,7 @@ class WorldSegment;
 
 class Chunk {
 public:
-	Chunk(int x, int z, WorldSegment* segment);
+	Chunk(int x, int z, WorldSegment* segment, std::shared_ptr<Shader>& ChunkShader);
 	~Chunk();
 
 	BlockType Get(int x, int y, int z) const;
@@ -32,6 +32,7 @@ public:
 	bool IsLoaded() { 
 		return m_Loaded; 
 	};
+	void ReMesh();
 	int GetPosX() { return m_PosX; }
 	int GetPosZ() { return m_PosZ; }
 	glm::mat4& GetModel() { return m_Model; }
@@ -44,6 +45,10 @@ public:
 	void Render(const glm::mat4& MVP);
 
 private:
+	static FastNoise::SmartNode<> m_rootNoiseNode;
+	
+	std::shared_ptr<Shader> m_ChunkShader;
+
 	int m_PosX;
 	int m_PosZ;
 	WorldSegment* m_Segment;
@@ -51,14 +56,12 @@ private:
 	std::unique_ptr<VertexBuffer> m_VBO;
 	std::unique_ptr<VertexArray> m_VAO;
 	std::unique_ptr<VertexBufferLayout> m_Layout;
-	std::unique_ptr<Shader> m_ChunkShader;
-	Vertex* m_Vertecies;
+	std::vector<Vertex> m_Vertecies;
 	Renderer m_Renderer;
 	Texture m_WhiteTexture;
 	int m_Elements;
-	bool m_Changed;
-	bool m_Loaded;
-	FastNoise::SmartNode<> m_rootNoiseNode;
+	std::atomic<bool> m_Changed;
+	std::atomic<bool> m_Loaded;
 	std::vector<float> m_noiseOutput;
 	std::mutex m_VerteciesMutex;
 
