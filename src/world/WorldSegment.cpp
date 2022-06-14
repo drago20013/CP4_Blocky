@@ -2,9 +2,13 @@
 
 #include <thread>
 #include <future>
+#include <filesystem>
+
+extern std::filesystem::path g_WorkDir;
 
 WorldSegment::WorldSegment(std::shared_ptr<Player> player) : m_Player(player) {
     m_Chunks.reserve(SEGMENT_AREA);
+    m_ChunkShader = std::make_shared<Shader>((g_WorkDir / "res/shaders/ChunkShader.glsl").string());
 }
 
 WorldSegment::~WorldSegment() {
@@ -49,7 +53,7 @@ void WorldSegment::Set(int x, int y, int z, BlockType type) {
 
     if (!m_Chunks.contains({chunkX, chunkZ}))
         m_Chunks.emplace(SegmentPos({chunkX, chunkZ}),
-                         new Chunk(chunkX, chunkZ, this));
+                         new Chunk(chunkX, chunkZ, this, m_ChunkShader));
 
     m_Chunks.find({chunkX, chunkZ})->second->Set(x, y, z, type);
 }
@@ -64,7 +68,7 @@ void WorldSegment::SetActive(int x, int y, int z, bool activeLevel) {
 
     if (!m_Chunks.contains({chunkX, chunkZ}))
         m_Chunks.emplace(SegmentPos({chunkX, chunkZ}),
-                         new Chunk(chunkX, chunkZ, this));
+                         new Chunk(chunkX, chunkZ, this, m_ChunkShader));
 
     m_Chunks.find({chunkX, chunkZ})->second->SetActive(x, y, z, activeLevel);
 }
@@ -83,43 +87,31 @@ void WorldSegment::Render() {
 
 void WorldSegment::Load() {
     int X{}, Z{};
-    //std::vector<std::jthread> threads;
     for (auto& chunk : m_ToLoad) {
         std::async(std::launch::async, [&]() {
             X = chunk->GetPosX();
             Z = chunk->GetPosZ();
             chunk->Load();
+
+            if (m_Chunks.contains({ X - 1, Z }) && m_Chunks[{X - 1, Z}]->IsLoaded())  m_Chunks[{X - 1, Z}]->SetChanged(true);
+            if (m_Chunks.contains({ X + 1, Z }) && m_Chunks[{X + 1, Z}]->IsLoaded())  m_Chunks[{X + 1, Z}]->SetChanged(true);
+            if (m_Chunks.contains({ X, Z - 1 }) && m_Chunks[{X, Z - 1}]->IsLoaded())  m_Chunks[{X, Z - 1}]->SetChanged(true);
+            if (m_Chunks.contains({ X, Z + 1 }) && m_Chunks[{X, Z + 1}]->IsLoaded())  m_Chunks[{X, Z + 1}]->SetChanged(true);
             });
     }
-  /*  for (auto& t : threads) {
-        t.detach();
-    }*/
 }
 
 void WorldSegment::Unload() {
     std::vector<std::jthread> threads;
     for (auto& chunk : m_ToUnload) {
-        //threads.emplace_back([&]() {chunk->Unload(); });
         std::async(std::launch::async, [&]() {chunk->Unload(); });
     }
-    /*for (auto& t : threads) {
-        t.detach();
-    }*/
 }
 
 void WorldSegment::Generate() {
-    //std::vector<std::jthread> threads;
     for (auto& chunk : m_ToGenerate) {
-       //threads.emplace_back([&]() {chunk->Generate(); });
        std::async(std::launch::async, [&]() {chunk->Generate(); });
     }
-    //for (auto& chunk : m_ToRegenerate) {
-    //    //threads.emplace_back([&]() {chunk->Generate(); });
-    //    std::async(std::launch::async, [&]() {chunk->Generate(); });
-    //}
-    /*for (auto& t:threads){
-        t.detach();
-    }*/
 }
 
 void WorldSegment::Update() {
@@ -132,26 +124,23 @@ void WorldSegment::Update() {
     m_ToUnload.clear();
     m_ToGenerate.clear();
     float distance{};
-    int i{ 2 }, k{ 1 };
+    int i{ 8 }, k{ 4 };
     for (auto& chunk : m_Chunks) {
         distance = sqrt((playerChunkX - chunk.second->GetPosX()) *
                             (playerChunkX - chunk.second->GetPosX()) +
                         (playerChunkZ - chunk.second->GetPosZ()) *
                             (playerChunkZ - chunk.second->GetPosZ()));
         
-        if (i && distance > 11 && chunk.second->IsLoaded()) {
+        if (i && distance > 21 && chunk.second->IsLoaded()) {
             i--;
             m_ToUnload.push_back(chunk.second);
         }
-        if (distance < 10 ) {
-            if (chunk.second->IsLoaded()) {
-                m_ToRender.push_back(chunk.second); 
-            }
-            else if(k && !chunk.second->IsLoaded()) {
-                k--;
-                m_ToLoad.push_back(chunk.second);
-                m_ToGenerate.push_back(chunk.second);
-            }
+        if (distance < 10 && chunk.second->IsLoaded()) 
+            m_ToRender.push_back(chunk.second);
+        else if (k && distance < 20 && !chunk.second->IsLoaded()) {
+            k--;
+            m_ToLoad.push_back(chunk.second);
+            m_ToGenerate.push_back(chunk.second);
         }
     }            
     
@@ -243,11 +232,11 @@ void WorldSegment::GenereteSegment()
         (int)floor((float)m_Player->GetLastPosition().x / CHUNK_SIZE);
     int playerChunkZ =
         (int)floor((float)m_Player->GetLastPosition().z / CHUNK_SIZE);
-    for (int posX = playerChunkX - 8; posX < playerChunkX + 8; posX++) {
-        for (int posZ = playerChunkZ - 8; posZ < playerChunkZ + 8; posZ++) {
+    for (int posX = playerChunkX - 10; posX < playerChunkX + 10; posX++) {
+        for (int posZ = playerChunkZ - 10; posZ < playerChunkZ + 10; posZ++) {
             if (!m_Chunks.contains({ posX, posZ }))
                 m_Chunks.emplace(SegmentPos({ posX, posZ }),
-                    new Chunk(posX, posZ, this));
+                    new Chunk(posX, posZ, this, m_ChunkShader));
         }
     }
 }
