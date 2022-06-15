@@ -3,6 +3,7 @@
 #include <memory>
 #include <FastNoise/FastNoise.h>
 #include <mutex>
+#include <atomic>
 
 #include "../VertexBuffer.h"
 #include "../VertexArray.h"

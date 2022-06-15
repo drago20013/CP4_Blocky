@@ -1,14 +1,16 @@
 #include "WorldSegment.h"
 
-#include <thread>
-#include <future>
+#include <cmath>
 #include <filesystem>
+#include <future>
+#include <thread>
 
 extern std::filesystem::path g_WorkDir;
 
 WorldSegment::WorldSegment(std::shared_ptr<Player> player) : m_Player(player) {
     m_Chunks.reserve(SEGMENT_AREA);
-    m_ChunkShader = std::make_shared<Shader>((g_WorkDir / "res/shaders/ChunkShader.glsl").string());
+    m_ChunkShader = std::make_shared<Shader>(
+        (g_WorkDir / "res/shaders/ChunkShader.glsl").string());
 }
 
 WorldSegment::~WorldSegment() {
@@ -75,7 +77,7 @@ void WorldSegment::SetActive(int x, int y, int z, bool activeLevel) {
 
 void WorldSegment::Render() {
     for (auto& chunk : m_ToRender) {
-        std::async(std::launch::async, [&]() {chunk->ReMesh(); });
+        auto a = std::async(std::launch::async, [&]() { chunk->ReMesh(); });
     }
 
     for (auto& chunk : m_ToRender) {
@@ -91,31 +93,50 @@ void WorldSegment::Render() {
 
 void WorldSegment::Load() {
     int X{}, Z{};
+    // std::vector<std::jthread> threads;
     for (auto& chunk : m_ToLoad) {
-        std::async(std::launch::async, [&]() {
+        auto a = std::async(std::launch::async, [&]() {
             X = chunk->GetPosX();
             Z = chunk->GetPosZ();
             chunk->Load();
 
-            if (m_Chunks.contains({ X - 1, Z }) && m_Chunks[{X - 1, Z}]->IsLoaded())  m_Chunks[{X - 1, Z}]->SetChanged(true);
-            if (m_Chunks.contains({ X + 1, Z }) && m_Chunks[{X + 1, Z}]->IsLoaded())  m_Chunks[{X + 1, Z}]->SetChanged(true);
-            if (m_Chunks.contains({ X, Z - 1 }) && m_Chunks[{X, Z - 1}]->IsLoaded())  m_Chunks[{X, Z - 1}]->SetChanged(true);
-            if (m_Chunks.contains({ X, Z + 1 }) && m_Chunks[{X, Z + 1}]->IsLoaded())  m_Chunks[{X, Z + 1}]->SetChanged(true);
-            });
+            if (m_Chunks.contains({X - 1, Z}) &&
+                m_Chunks[{X - 1, Z}]->IsLoaded())
+                m_Chunks[{X - 1, Z}]->SetChanged(true);
+            if (m_Chunks.contains({X + 1, Z}) &&
+                m_Chunks[{X + 1, Z}]->IsLoaded())
+                m_Chunks[{X + 1, Z}]->SetChanged(true);
+            if (m_Chunks.contains({X, Z - 1}) &&
+                m_Chunks[{X, Z - 1}]->IsLoaded())
+                m_Chunks[{X, Z - 1}]->SetChanged(true);
+            if (m_Chunks.contains({X, Z + 1}) &&
+                m_Chunks[{X, Z + 1}]->IsLoaded())
+                m_Chunks[{X, Z + 1}]->SetChanged(true);
+        });
     }
+    // for (auto& t : threads) {
+    // t.detach();
+    //}
 }
 
 void WorldSegment::Unload() {
     std::vector<std::jthread> threads;
     for (auto& chunk : m_ToUnload) {
-        std::async(std::launch::async, [&]() {chunk->Unload(); });
+        auto a = std::async(std::launch::async, [&]() { chunk->Unload(); });
     }
+    // for (auto& t : threads) {
+    // t.detach();
+    //}
 }
 
 void WorldSegment::Generate() {
+    // std::vector<std::jthread> threads;
     for (auto& chunk : m_ToGenerate) {
-       std::async(std::launch::async, [&]() {chunk->Generate(); });
+        auto a = std::async(std::launch::async, [&]() { chunk->Generate(); });
     }
+    // for (auto& t : threads) {
+    // t.detach();
+    //}
 }
 
 void WorldSegment::Update() {
@@ -123,31 +144,35 @@ void WorldSegment::Update() {
         (int)floor((float)m_Player->GetLastPosition().x / CHUNK_SIZE);
     int playerChunkZ =
         (int)floor((float)m_Player->GetLastPosition().z / CHUNK_SIZE);
+
     m_ToRender.clear();
+
     m_ToLoad.clear();
+
     m_ToUnload.clear();
+
     m_ToGenerate.clear();
     float distance{};
-    int i{ 4 }, k{ 2 };
+    int i{2}, k{2};
     for (auto& chunk : m_Chunks) {
         distance = sqrt((playerChunkX - chunk.second->GetPosX()) *
                             (playerChunkX - chunk.second->GetPosX()) +
                         (playerChunkZ - chunk.second->GetPosZ()) *
                             (playerChunkZ - chunk.second->GetPosZ()));
-        
+
         if (i && distance > 40 && chunk.second->IsLoaded()) {
             i--;
             m_ToUnload.push_back(chunk.second);
         }
-        if (distance < 10 && chunk.second->IsLoaded()) 
+        if (distance < 10 && chunk.second->IsLoaded())
             m_ToRender.push_back(chunk.second);
         else if (k && distance < 20 && !chunk.second->IsLoaded()) {
             k--;
             m_ToLoad.push_back(chunk.second);
             m_ToGenerate.push_back(chunk.second);
         }
-    }            
-    
+    }
+
     Load();
     Unload();
     Generate();
@@ -157,90 +182,120 @@ void WorldSegment::CheckCollision() {
     glm::vec3 newPos = m_Player->GetPosition();
     glm::vec3 lastPos = m_Player->GetLastPosition();
 
-    glm::vec3 direction(0);
-    if (glm::length(newPos - lastPos) > 0)
-        direction = glm::normalize(newPos - lastPos);
+    glm::ivec3 currentBlock(floor(lastPos));
+    glm::ivec3 targetBlock(newPos);
 
-    if (direction.y < 0)  // check below
-    {
-        m_Player->SetOnGround(false);
+    for (int x = (currentBlock.x - 1); x <= (targetBlock.x + 1); x++) {
+        for (int y = (currentBlock.y - 1); y <= (targetBlock.y + 1); y++) {
+            for (int z = (currentBlock.z - 1); z <= (targetBlock.z + 1); z++) {
+                if (IsActive(x, y, z)) {
+                    glm::vec3 nearestPoint;
+                    nearestPoint.x =
+                        std::max(float(x), std::min(newPos.x, float(x + 1)));
+                    nearestPoint.y =
+                        std::max(float(y), std::min(newPos.y, float(y + 1)));
+                    nearestPoint.z =
+                        std::max(float(z), std::min(newPos.z, float(z + 1)));
 
-        if (IsActive(newPos.x, newPos.y,
-                     newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
-            m_Player->SetOnGround(true);
-            m_Player->SetVelocityY(0.0f);
-            newPos.y = glm::floor(lastPos.y);
-            // printf("Collision going y-\n");
+                    glm::vec3 rayToNearest = nearestPoint - newPos;
+
+                    float rayMag = glm::length(rayToNearest);
+                    float overlap = m_Player->GetDimensions().x - rayMag;
+
+                    if (std::isnan(overlap)) overlap = 0;
+
+                    if (overlap > 0 && rayMag > 0) {
+                        newPos =
+                            newPos - glm::normalize(rayToNearest) * overlap;
+                    }
+                }
+            }
         }
     }
 
-    if (direction.y > 0)  // check above
-    {
-        if (IsActive(newPos.x, newPos.y + 2,
-                     newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
-            m_Player->SetVelocityY(0.0f);
-            newPos.y = lastPos.y;
-        }
-    }
+    // glm::vec3 direction(0);
+    // if (glm::length(newPos - lastPos) > 0)
+    // direction = glm::normalize(newPos - lastPos);
 
-    if (direction.x < 0) {
-        if (IsActive(newPos.x, newPos.y,
-                     newPos.z > 0 ? newPos.z + .5f : newPos.z) ||
-            IsActive(newPos.x, newPos.y + 1.0f,
-                     newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
-            m_Player->SetVelocityX(0.0f);
-            newPos.x = lastPos.x;
-            printf("Collision going x-\n");
-        }
-    }
+    // if (direction.y < 0)  // check below
+    //{
+    // m_Player->SetOnGround(false);
 
-    if (direction.x > 0) {
-        if (IsActive(newPos.x, newPos.y,
-                     newPos.z > 0 ? newPos.z + .5f : newPos.z) ||
-            IsActive(newPos.x, newPos.y + 1.0f,
-                     newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
-            m_Player->SetVelocityX(0.0f);
-            newPos.x = lastPos.x;
-            printf("Collision going x+\n");
-        }
-    }
+    // if (IsActive(newPos.x, newPos.y,
+    // newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+    // m_Player->SetOnGround(true);
+    // m_Player->SetVelocityY(0.0f);
+    // newPos.y = glm::floor(lastPos.y);
+    //// printf("Collision going y-\n");
+    //}
+    //}
 
-    if (direction.z < 0) {
-        if (IsActive(newPos.x, newPos.y,
-                     newPos.z > 0 ? newPos.z - .5f : newPos.z) ||
-            IsActive(newPos.x, newPos.y + 1.0f,
-                     newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
-            m_Player->SetVelocityZ(0.0f);
-            newPos.z = lastPos.z;
-            printf("Collision going z-\n");
-        }
-    }
+    // if (direction.y > 0)  // check above
+    //{
+    // if (IsActive(newPos.x, newPos.y + 2,
+    // newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+    // m_Player->SetVelocityY(0.0f);
+    // newPos.y = lastPos.y;
+    //}
+    //}
 
-    if (direction.z > 0) {
-        if (IsActive(newPos.x, newPos.y,
-                     newPos.z > 0 ? newPos.z - .5f : newPos.z) ||
-            IsActive(newPos.x, newPos.y + 1.0f,
-                     newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
-            m_Player->SetVelocityZ(0.0f);
-            newPos.z = lastPos.z;
-            printf("Collision going z+\n");
-        }
-    }
+    // if (direction.x < 0) {
+    // if (IsActive(newPos.x, newPos.y,
+    // newPos.z > 0 ? newPos.z + .5f : newPos.z) ||
+    // IsActive(newPos.x, newPos.y + 1.0f,
+    // newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+    // m_Player->SetVelocityX(0.0f);
+    // newPos.x = lastPos.x;
+    // printf("Collision going x-\n");
+    //}
+    //}
+
+    // if (direction.x > 0) {
+    // if (IsActive(newPos.x, newPos.y,
+    // newPos.z > 0 ? newPos.z + .5f : newPos.z) ||
+    // IsActive(newPos.x, newPos.y + 1.0f,
+    // newPos.z > 0 ? newPos.z + .5f : newPos.z)) {
+    // m_Player->SetVelocityX(0.0f);
+    // newPos.x = lastPos.x;
+    // printf("Collision going x+\n");
+    //}
+    //}
+
+    // if (direction.z < 0) {
+    // if (IsActive(newPos.x, newPos.y,
+    // newPos.z > 0 ? newPos.z - .5f : newPos.z) ||
+    // IsActive(newPos.x, newPos.y + 1.0f,
+    // newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
+    // m_Player->SetVelocityZ(0.0f);
+    // newPos.z = lastPos.z;
+    // printf("Collision going z-\n");
+    //}
+    //}
+
+    // if (direction.z > 0) {
+    // if (IsActive(newPos.x, newPos.y,
+    // newPos.z > 0 ? newPos.z - .5f : newPos.z) ||
+    // IsActive(newPos.x, newPos.y + 1.0f,
+    // newPos.z > 0 ? newPos.z - .5f : newPos.z)) {
+    // m_Player->SetVelocityZ(0.0f);
+    // newPos.z = lastPos.z;
+    // printf("Collision going z+\n");
+    //}
+    //}
 
     m_Player->SetPosition(newPos);
 }
 
-void WorldSegment::GenereteSegment()
-{
+void WorldSegment::GenereteSegment() {
     int playerChunkX =
         (int)floor((float)m_Player->GetLastPosition().x / CHUNK_SIZE);
     int playerChunkZ =
         (int)floor((float)m_Player->GetLastPosition().z / CHUNK_SIZE);
-    for (int posX = playerChunkX - 10; posX < playerChunkX + 10; posX++) {
-        for (int posZ = playerChunkZ - 10; posZ < playerChunkZ + 10; posZ++) {
-            if (!m_Chunks.contains({ posX, posZ }))
-                m_Chunks.emplace(SegmentPos({ posX, posZ }),
-                    new Chunk(posX, posZ, this, m_ChunkShader));
+    for (int posX = playerChunkX - 20; posX < playerChunkX + 20; posX++) {
+        for (int posZ = playerChunkZ - 20; posZ < playerChunkZ + 20; posZ++) {
+            if (!m_Chunks.contains({posX, posZ}))
+                m_Chunks.emplace(SegmentPos({posX, posZ}),
+                                 new Chunk(posX, posZ, this, m_ChunkShader));
         }
     }
 }
