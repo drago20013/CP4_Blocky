@@ -30,6 +30,10 @@ void Shader::SetUniform1i(const std::string& name, int value){
     GLCall(glUniform1i(GetUniformLocation(name), value));
 }
 
+void Shader::SetUniform1iv(const std::string& name, int count, int* samplers) {
+    GLCall(glUniform1iv(GetUniformLocation(name), count, samplers));
+}
+
 void Shader::SetUniform1f(const std::string& name, float value){
     GLCall(glUniform1f(GetUniformLocation(name), value));
 }
@@ -90,7 +94,7 @@ unsigned int Shader::CompileShader(unsigned int type, const std::string& source)
 
     int result;
     GLCall(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
-    if (result == GL_FALSE) {
+    if (result != GL_TRUE) {
         int length;
         GLCall(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
         char* message = (char*)alloca(length * sizeof(char));

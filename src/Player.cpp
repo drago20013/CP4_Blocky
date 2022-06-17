@@ -9,8 +9,8 @@ extern bool flyMode;
 
 Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed)
     : m_Model(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))) {
-    m_LastX = SCR_WIDTH / 2.0f;
-    m_LastY = SCR_HEIGHT / 2.0f;
+    m_LastX = SCR_WIDTH * 0.5f;
+    m_LastY = SCR_HEIGHT * 0.5f;
     m_FirstMouse = true;
     m_OnGround = false;
     m_Pos = pos;
@@ -21,7 +21,7 @@ Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed)
     m_Acc = glm::vec3(0.0f);
     m_Vel = glm::vec3(0.0f);
     m_Cam = Camera(m_Pos + m_CamPos, m_Speed);
-    m_Gravity = -10.0f;
+    m_Gravity = -15.0f;
     m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f,
                               1000.0f);
     m_View = m_Cam.GetViewMatrix();
@@ -90,6 +90,8 @@ void Player::Update(float& deltaTime) {
 
     if (glm::length(m_Vel) > m_Speed) {
         glm::vec3 tmp = glm::normalize(m_Vel) * m_Speed; 
+        m_Vel.y = m_Vel.y > m_Speed ? m_Speed : m_Vel.y;
+        m_Vel.y = m_Vel.y < -m_Speed ? -m_Speed : m_Vel.y;
         m_Vel = glm::vec3(tmp.x, m_Vel.y, tmp.z);
     }
 
@@ -123,21 +125,21 @@ void Player::ProcessMove(GLFWwindow* window, float& deltaTime) {
 
     if (!flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS &&
         m_OnGround) {
-        m_Acc.y += 600.f * deltaTime;
+        m_Acc.y += 400.0f * deltaTime;
     }
 
     else if (!flyMode &&
              glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
              m_OnGround) {
-        m_Vel.x *= 0.5f;
-        m_Vel.z *= 0.5f;
+        m_Vel.x *= 0.1f;
+        m_Vel.z *= 0.1f;
     }
 
     else if (flyMode && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        m_Acc.y -= 200.f * deltaTime;
+        m_Acc.y -= 600.f * deltaTime;
     }
 
     else if (flyMode && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        m_Acc.y += 200.f * deltaTime;
+        m_Acc.y += 600.f * deltaTime;
     }
 }

@@ -28,7 +28,7 @@ float aspectRatio =
 unsigned int NEW_SCR_WIDTH = SCR_WIDTH;
 unsigned int NEW_SCR_HEIGHT = SCR_HEIGHT;
 bool mouseHidden{};
-bool flyMode{};
+bool flyMode{true};
 bool wireFrame{};
 
 float deltaTime = 0.0f;  // Time between current frame and last frame
@@ -62,7 +62,7 @@ int main() {
     }
 
     std::shared_ptr<Player> player = std::make_shared<Player>(
-        glm::vec3(0.0f, 128.0f, 0.0f), glm::vec3(0.4f, 1.8f, 0.4f), 50.0f);
+        glm::vec3(0.0f, 70.0f, 0.0f), glm::vec3(.4f, 1.8f, 0.4f), 8.0f);
 
     glfwSetWindowUserPointer(window, player.get());
 
@@ -161,15 +161,18 @@ int main() {
             }
 
             render->Clear();
+            
+            if (!mouseHidden) deltaTime = 0;
 
             if (mouseHidden) {
-                player->ProcessMove(window, deltaTime);
 
+                player->ProcessMove(window, deltaTime);
+                
                 player->Update(deltaTime);
 
                 segment->GenereteSegment();
 
-                segment->CheckCollision();
+                if (!flyMode) segment->CheckCollision();
 
                 segment->Update();
             }
