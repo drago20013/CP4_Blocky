@@ -9,19 +9,19 @@ namespace glm {
 }
 
 struct Vertex {
-	glm::vec3b Position;
-	GLubyte DirectLight;
+	GLubyte VertexData1; // x and y1, 
+	GLubyte VertexData2; // y2 and z, 
+	GLubyte VertexData3; //blockType, vertexpos
 };
 
 enum class BlockType {
-	BlockType_Default = 0,
-	BlockType_Grass,
-	BlockType_Dirt,
-	BlockType_Water,
-	BlockType_Stone,
-	BlockType_Wood,
-	BlockType_Sand,
-	BlockType_NumTypes,
+	BlockType_Default = 7, //Air
+	BlockType_Grass = 0,
+	BlockType_Dirt = 1,
+	BlockType_Water = 2,
+	BlockType_Stone = 3,
+	BlockType_Wood = 4,
+	BlockType_Sand = 5
 };
 
 class Block {

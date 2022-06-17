@@ -11,6 +11,8 @@ struct SegmentPos
 {
 	int x;
 	int z;
+	
+	SegmentPos(int _x, int _z) : x(_x), z(_z) {};
 
 	bool operator==(const SegmentPos& rhs) const {
 		return x == rhs.x && z == rhs.z;
@@ -53,9 +55,9 @@ private:
     std::vector<Chunk*> m_ToLoad;
 	std::vector<Chunk*> m_ToUnload;
 	std::vector<Chunk*> m_ToGenerate;
-	std::mutex m_ToLoadMutex;
-	std::mutex m_ToGenerateMutex;
 	std::mutex m_UnLoadMutex;
 
 	std::shared_ptr<Shader> m_ChunkShader;
+	std::shared_ptr<Texture> m_WhiteTexture;
+	std::shared_ptr<Texture> m_TextureAtlas;
 };

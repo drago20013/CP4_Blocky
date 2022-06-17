@@ -3,7 +3,6 @@
 #include <memory>
 #include <FastNoise/FastNoise.h>
 #include <mutex>
-#include <atomic>
 
 #include "../VertexBuffer.h"
 #include "../VertexArray.h"
@@ -13,7 +12,7 @@
 #include "Block.h"
 
 #define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 128
+#define CHUNK_HEIGHT 127
 #define CHUNK_AREA CHUNK_SIZE*CHUNK_SIZE
 #define CHUNK_VOLUME CHUNK_AREA*CHUNK_HEIGHT
 
@@ -29,8 +28,8 @@ public:
 
 	void SetActive(int x, int y, int z, bool activeLevel);
 	void SetChanged(bool changedLevel);
-	bool IsActive(int x, int y, int z);
-	bool IsLoaded() { 
+	bool IsActive(int x, int y, int z) const;
+	bool IsLoaded() const{ 
 		return m_Loaded; 
 	};
 	void ReMesh();
@@ -59,7 +58,7 @@ private:
 	std::unique_ptr<VertexBufferLayout> m_Layout;
 	std::vector<Vertex> m_Vertecies;
 	Renderer m_Renderer;
-	Texture m_WhiteTexture;
+	
 	int m_Elements;
 	std::atomic<bool> m_Changed;
 	std::atomic<bool> m_Loaded;

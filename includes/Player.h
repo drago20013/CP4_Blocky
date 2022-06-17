@@ -25,8 +25,8 @@ public:
     void SetModelM(const glm::mat4& model);
     void SetFirstMouse() {
         m_FirstMouse = true;
-        m_LastX = SCR_WIDTH / 2.0f;
-        m_LastY = SCR_HEIGHT / 2.0f;
+        m_LastX = SCR_WIDTH * 0.5f;
+        m_LastY = SCR_HEIGHT * 0.5f;
     }
 
     const glm::vec3& GetPosition() const { return m_Pos; }
@@ -49,6 +49,7 @@ private:
     glm::vec3 m_Acc;
     glm::vec3 m_Vel;
     glm::vec3 m_Dimensions;
+    glm::vec3 m_ColliderCenter;
 
     bool m_OnGround;
     float m_Speed;
