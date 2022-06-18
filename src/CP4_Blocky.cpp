@@ -19,6 +19,7 @@
 #include "VertexBufferLayout.h"
 #include "WorldSegment.h"
 #include "glm/geometric.hpp"
+#include "vendor/stb_image/stb_image.h"
 
 // settings
 unsigned int SCR_WIDTH = 800;
@@ -35,8 +36,13 @@ float deltaTime = 0.0f;  // Time between current frame and last frame
 float lastTime = 0.0f;   // Time of last frame
 
 #ifdef _MSC_VER
+#ifdef _DEBUG
 std::filesystem::path g_WorkDir(
     "C:\\Users\\Michal\\source\\repos\\CP4_Blocky\\x64\\Debug");
+#else 
+std::filesystem::path g_WorkDir(
+    "./");
+#endif
 #else
 std::filesystem::path g_WorkDir("/home/drago/CLionProjects/CP4_Blocky/");
 #endif
@@ -60,6 +66,11 @@ int main() {
         glfwTerminate();
         return -1;
     }
+
+    GLFWimage images[1];
+    images->pixels = stbi_load((g_WorkDir.string() + "/res/textures/ico.png").c_str(), &images[0].width, &images[0].height, 0, 4); //rgba channels 
+    glfwSetWindowIcon(window, 1, images);
+    stbi_image_free(images[0].pixels);
 
     std::shared_ptr<Player> player = std::make_shared<Player>(
         glm::vec3(0.0f, 70.0f, 0.0f), glm::vec3(.4f, 1.8f, 0.4f), 8.0f);

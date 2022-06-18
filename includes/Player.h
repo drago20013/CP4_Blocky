@@ -49,7 +49,6 @@ private:
     glm::vec3 m_Acc;
     glm::vec3 m_Vel;
     glm::vec3 m_Dimensions;
-    glm::vec3 m_ColliderCenter;
 
     bool m_OnGround;
     float m_Speed;

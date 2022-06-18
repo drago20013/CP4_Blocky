@@ -16,7 +16,7 @@ Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed)
     m_Pos = pos;
     m_LastPos = pos;
     m_Dimensions = dimensions;
-    m_CamPos = glm::vec3(0.0f, m_Dimensions.y - 0.3f, 0.0f);
+    m_CamPos = glm::vec3(0.0f, m_Dimensions.y - 0.5f, 0.0f);
     m_Speed = speed;
     m_Acc = glm::vec3(0.0f);
     m_Vel = glm::vec3(0.0f);

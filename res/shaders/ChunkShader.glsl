@@ -24,19 +24,19 @@ void main(void) {
 	switch(directLight){
 	case 0u:
 	tex_x = (blockType * 3u) % 12u + 1u;
-	v_directLightColor = vec4(0.5*0.6, 0.5*0.6, 0.8*0.6, 1.0);
+	v_directLightColor = vec4(0.6, 0.6, 0.6, 1.0);
 	break;
 	case 1u:
 	tex_x = (blockType * 3u) % 12u + 1u;
-	v_directLightColor = vec4(0.5*0.8, 0.5*0.8, 0.8*0.8, 1.0);
+	v_directLightColor = vec4(0.8, 0.8, 0.8, 1.0);
 	break;
 	case 2u:
 	tex_x = (blockType * 3u) % 12u;
-	v_directLightColor = vec4(0.5, 0.5, 0.8, 1.0);
+	v_directLightColor = vec4(1.0, 1.0, 1.0, 1.0);
 	break;
 	case 3u:
 	tex_x = (blockType * 3u) % 12u + 2u;
-	v_directLightColor = vec4(0.5*0.4, 0.5*0.4, 0.8*0.4, 1.0);
+	v_directLightColor = vec4(0.4, 0.4, 0.4, 1.0);
 	break;
 	}
 

@@ -102,7 +102,7 @@ void Chunk::Load(){
 }
 
 void Chunk::Generate() {
-    std::lock_guard<std::mutex> guard(m_VerteciesMutex);
+    //std::lock_guard<std::mutex> guard(m_VerteciesMutex);
     int i{};
     uint8_t blockType{};
 

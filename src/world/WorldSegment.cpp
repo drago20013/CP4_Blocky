@@ -213,6 +213,9 @@ void WorldSegment::CheckCollision() {
                             m_Player->SetVelocityY(0);
                             m_Player->SetOnGround(true);
                         }
+                        if (rayToNearest.y > 0) {
+                            m_Player->SetVelocityY(0);
+                        }
                     }
                 }
             }
