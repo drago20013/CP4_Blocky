@@ -31,6 +31,8 @@ unsigned int NEW_SCR_HEIGHT = SCR_HEIGHT;
 bool mouseHidden{};
 bool flyMode{true};
 bool wireFrame{};
+bool placeBlock{};
+bool destroyBlock{};
 
 float deltaTime = 0.0f;  // Time between current frame and last frame
 float lastTime = 0.0f;   // Time of last frame
@@ -67,13 +69,15 @@ int main() {
         return -1;
     }
 
+    glfwMakeContextCurrent(window);
+
     GLFWimage images[1];
     images->pixels = stbi_load((g_WorkDir.string() + "/res/textures/ico.png").c_str(), &images[0].width, &images[0].height, 0, 4); //rgba channels 
     glfwSetWindowIcon(window, 1, images);
     stbi_image_free(images[0].pixels);
 
     std::shared_ptr<Player> player = std::make_shared<Player>(
-        glm::vec3(0.0f, 70.0f, 0.0f), glm::vec3(.4f, 1.8f, 0.4f), 8.0f);
+        glm::vec3(0.0f, 70.0f, 0.0f), glm::vec3(.4f, 1.8f, 0.4f), 10.0f);
 
     glfwSetWindowUserPointer(window, player.get());
 
@@ -124,11 +128,26 @@ int main() {
         }
     };
 
-    glfwMakeContextCurrent(window);
+    auto mouseButtonCallback = [](GLFWwindow* window, int button, int action, int mods) {
+        if (mouseHidden)
+        {
+            if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+            {
+                placeBlock = true;
+            }
+            else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+            {
+                destroyBlock = true;
+            }
+        }
+    };
+
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, playerMouseCallback);
     glfwSetScrollCallback(window, playerScrollCallback);
     glfwSetKeyCallback(window, keyCallback);
+
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -140,15 +159,19 @@ int main() {
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     //=======================================================
-
+    
     {
         std::unique_ptr<Renderer> render = std::make_unique<Renderer>();
-
-        std::unique_ptr<WorldSegment> segment =
-            std::make_unique<WorldSegment>(player);
+        std::unique_ptr<WorldSegment> segment = std::make_unique<WorldSegment>(player);
 
         float lastFrame = 0.0f;
         int nbFrames = 0;
+
+        // Loading screen here
+
+        render->Clear();
+        segment->Initialize();
+        glfwSwapBuffers(window);
 
         // render loop
         // -----------
@@ -171,28 +194,47 @@ int main() {
                 lastFrame = currentFrame;
             }
 
-            render->Clear();
+            
             
             if (!mouseHidden) deltaTime = 0;
+            
 
             if (mouseHidden) {
+                render->Clear();
 
                 player->ProcessMove(window, deltaTime);
                 
                 player->Update(deltaTime);
 
-                segment->GenereteSegment();
-
                 if (!flyMode) segment->CheckCollision();
 
-                segment->Update();
+                segment->GenereteSegment();
+
+                if (placeBlock) {
+                    segment->PlaceBlock();
+                    placeBlock = false;
+                }
+
+                if (destroyBlock) {
+                    segment->DestroyBlock();
+                    destroyBlock = false;
+                }
+
+                segment->Update(); 
+
+                segment->Render();
+
+                render->DrawCross();
+
+                glfwSwapBuffers(window);
             }
-            segment->Render();
+
+           
 
             if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
                 glfwSetWindowShouldClose(window, true);
 
-            glfwSwapBuffers(window);
+           
             glfwPollEvents();
         }
     }

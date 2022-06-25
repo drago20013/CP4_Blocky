@@ -19,7 +19,6 @@ WorldSegment::WorldSegment(std::shared_ptr<Player> player) : m_Player(player) {
     m_ChunkShader->Bind();
     int samplers[2] = { 0, 1 };
     m_ChunkShader->SetUniform1iv("u_Textures",2, samplers);
-
     m_ChunkShader->SetUniform1i("u_TexIndex", 1);
 }
 
@@ -36,7 +35,7 @@ BlockType WorldSegment::Get(int x, int y, int z) const {
     z %= CHUNK_SIZE;
 
     if (!m_Chunks.contains({chunkX, chunkZ}))
-        return BlockType::BlockType_Default;
+        return BlockType::Default;
     else
         return m_Chunks.find({chunkX, chunkZ})->second->Get(x, y, z);
 }
@@ -51,6 +50,20 @@ bool WorldSegment::IsActive(int x, int y, int z) const {
 
     if (m_Chunks.contains({chunkX, chunkZ}))
         return m_Chunks.find({chunkX, chunkZ})->second->IsActive(x, y, z);
+    else
+        return false;
+}
+
+bool WorldSegment::IsTransparent(int x, int y, int z) const {
+    int chunkX = (int)floor((float)x / CHUNK_SIZE);
+    int chunkZ = (int)floor((float)z / CHUNK_SIZE);
+
+    x %= CHUNK_SIZE;  // Block position inside chunk
+    y %= CHUNK_HEIGHT;
+    z %= CHUNK_SIZE;
+
+    if (m_Chunks.contains({ chunkX, chunkZ }))
+        return m_Chunks.find({ chunkX, chunkZ })->second->IsTransparent(x, y, z);
     else
         return false;
 }
@@ -83,18 +96,42 @@ void WorldSegment::SetActive(int x, int y, int z, bool activeLevel) {
     m_Chunks.find({chunkX, chunkZ})->second->SetActive(x, y, z, activeLevel);
 }
 
-void WorldSegment::Render() {
+void WorldSegment::DestroyBlock()
+{
+    glm::vec3 testpos = m_Player->GetCamPosition();
+    glm::vec3 prevpos = testpos;
 
-    for (auto& chunk : m_ToRender) {
+    for (int i = 0; i < 1000; i++) {
+
+        prevpos = testpos;
+        testpos += m_Player->GetLookAt()*0.005f;
+
+        int mx = floorf(testpos.x);
+        int my = floorf(testpos.y);
+        int mz = floorf(testpos.z);
+
+        if ((Get(mx, my, mz) != BlockType::Default) && (Get(mx, my, mz) != BlockType::Water)) {
+            Set(mx, my, mz, BlockType::Default);
+            break;
+        }
+    }
+}
+
+void WorldSegment::PlaceBlock()
+{
+}
+
+void WorldSegment::Render() {
+    for (auto& [d , chunk] : m_ToRender) {
         auto a = std::async(std::launch::async, [&]() { chunk->ReMesh(); });
     }
 
-    for (auto& chunk : m_ToRender) {
-        chunk->SetModel(glm::translate(
-            glm::mat4(1), glm::vec3(chunk->GetPosX() * CHUNK_SIZE, 0,
-                                    chunk->GetPosZ() * CHUNK_SIZE)));
-        m_Player->SetModelM(chunk->GetModel());
-        chunk->Render(m_Player->GetMVP());
+    for (auto i = m_ToRender.rbegin(); i != m_ToRender.rend(); i++){
+        i->second->SetModel(glm::translate(
+            glm::mat4(1), glm::vec3(i->second->GetPosX() * CHUNK_SIZE, 0,
+                i->second->GetPosZ() * CHUNK_SIZE)));
+        m_Player->SetModelM(i->second->GetModel());
+        i->second->Render(m_Player->GetMVP());
     }
 }
 
@@ -128,6 +165,7 @@ void WorldSegment::Unload() {
             chunk->Unload();
             });
     }
+
     for (auto& chunk : m_ToUnload) {
         m_Chunks.erase({ chunk->GetPosX(),chunk->GetPosZ() });
         delete chunk;
@@ -153,24 +191,25 @@ void WorldSegment::Update() {
     m_ToUnload.clear();
 
     m_ToGenerate.clear();
+
     float distance{};
     int i{2}, k{10};
-    for (auto& chunk : m_Chunks) {
-        distance = sqrt((playerChunkX - chunk.second->GetPosX()) *
-                            (playerChunkX - chunk.second->GetPosX()) +
-                        (playerChunkZ - chunk.second->GetPosZ()) *
-                            (playerChunkZ - chunk.second->GetPosZ()));
+    for (auto& [chunkPos, chunk] : m_Chunks) {
+        distance = sqrt((playerChunkX - chunkPos.x) *
+                            (playerChunkX - chunkPos.x) +
+                        (playerChunkZ - chunkPos.z) *
+                            (playerChunkZ - chunkPos.z));
 
-        if (i && distance > 40 && chunk.second->IsLoaded()) {
+        if (i && distance > 40 && chunk->IsLoaded()) {
             i--;
-            m_ToUnload.push_back(chunk.second);
+            m_ToUnload.push_back(chunk);
         }
-        if (distance < 10 && chunk.second->IsLoaded())
-            m_ToRender.push_back(chunk.second);
-        else if (k && distance < 20 && !chunk.second->IsLoaded()) {
+        if (distance < 15 && chunk->IsLoaded())
+            m_ToRender.emplace(distance, chunk);
+        else if (k && distance < 20 && !chunk->IsLoaded()) {
             k--;
-            m_ToLoad.push_back(chunk.second);
-            m_ToGenerate.push_back(chunk.second);
+            m_ToLoad.push_back(chunk);
+            m_ToGenerate.push_back(chunk);
         }
     }
 
@@ -190,7 +229,7 @@ void WorldSegment::CheckCollision() {
     for (int x = (currentBlock.x - 1); x <= (targetBlock.x + 1); x++) {
         for (int y = (currentBlock.y - 1); y <= (targetBlock.y + 1); y++) {
             for (int z = (currentBlock.z - 1); z <= (targetBlock.z + 1); z++) {
-                if (IsActive(x, y, z)) {
+                if (IsActive(x, y, z) && Get(x, y, z) != BlockType::Water) {
                     glm::vec3 nearestPoint{
                         std::max(float(x), std::min(float(x+1), newPos.x)),
                         std::max(float(y), std::min(float(y+1), newPos.y)),
@@ -229,10 +268,37 @@ void WorldSegment::GenereteSegment() {
         (int)floor((float)m_Player->GetLastPosition().x / CHUNK_SIZE);
     int playerChunkZ =
         (int)floor((float)m_Player->GetLastPosition().z / CHUNK_SIZE);
-    for (int posX = playerChunkX-20; posX < playerChunkX+20; posX++) { //was 20
-        for (int posZ = playerChunkZ-20; posZ < playerChunkZ+20; posZ++) {
+    for (int posX = playerChunkX-20; posX <= playerChunkX+20; posX++) {
+        for (int posZ = playerChunkZ-20; posZ <= playerChunkZ+20; posZ++) {
             if (!m_Chunks.contains({posX, posZ}))
                 m_Chunks.emplace(SegmentPos{ posX, posZ }, new Chunk(posX, posZ, this, m_ChunkShader));
         }
     }
+}
+
+void WorldSegment::Initialize() {
+    GenereteSegment();
+
+    int playerChunkX =
+        (int)floor((float)m_Player->GetLastPosition().x / CHUNK_SIZE);
+    int playerChunkZ =
+        (int)floor((float)m_Player->GetLastPosition().z / CHUNK_SIZE);
+    float distance{};
+
+    for (auto& [chunkPos, chunk] : m_Chunks) {
+        distance = sqrt((playerChunkX - chunkPos.x) *
+            (playerChunkX - chunkPos.x) +
+            (playerChunkZ - chunkPos.z) *
+            (playerChunkZ - chunkPos.z));
+
+        if (distance < 15)
+            m_ToRender.emplace(distance, chunk);
+
+            m_ToLoad.push_back(chunk);
+            m_ToGenerate.push_back(chunk);
+    }
+
+    Load();
+    Generate();
+    Render();
 }

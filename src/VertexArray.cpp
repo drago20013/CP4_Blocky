@@ -19,7 +19,20 @@ void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
 	for (unsigned int i = 0; i < elements.size(); i++) {
 		const auto& element = elements[i];
 		GLCall(glEnableVertexAttribArray(i));
-		GLCall(glVertexAttribIPointer(i, element.count, element.type, /*element.normalized,*/ layout.GetStride(), reinterpret_cast<const void*>(offset)));
+		GLCall(glVertexAttribIPointer(i, element.count, element.type, layout.GetStride(), reinterpret_cast<const void*>(offset)));
+		offset += element.count * VertexBufferElement::GetSizeOfType(element.type);
+	}
+}
+
+void VertexArray::AddBufferf(const VertexBuffer& vb, const VertexBufferLayout& layout) {
+	Bind();
+	vb.Bind();
+	const auto& elements = layout.GetElements();
+	unsigned int offset = 0;
+	for (unsigned int i = 0; i < elements.size(); i++) {
+		const auto& element = elements[i];
+		GLCall(glEnableVertexAttribArray(i));
+		GLCall(glVertexAttribPointer(i, element.count, element.type, element.normalized, layout.GetStride(), reinterpret_cast<const void*>(offset)));
 		offset += element.count * VertexBufferElement::GetSizeOfType(element.type);
 	}
 }

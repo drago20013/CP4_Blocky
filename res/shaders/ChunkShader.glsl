@@ -4,6 +4,7 @@
 layout(location = 0) in uint verData1;
 layout(location = 1) in uint verData2; 
 layout(location = 2) in uint verData3;
+layout(location = 3) in uint verData4;
 
 uniform mat4 u_MVP;
 
@@ -14,7 +15,7 @@ void main(void) {
 	float x = float(verData1 & 0x1Fu);
 	float y = float(((verData1 & 0xE0u) >> 5u) | ((verData2 & 0xFu) << 3u));
 	float z = float(verData3 & 0x1Fu);
-	uint blockType = (verData3 & 0xE0u) >> 5u;
+	uint blockType = (verData4 & 0xFu);
 	uint directLight = (verData2 & 0xC0u) >> 6u;
 	uint verPos = (verData2 & 0x30u) >> 4u;
 
@@ -33,6 +34,8 @@ void main(void) {
 	case 2u:
 	tex_x = (blockType * 3u) % 12u;
 	v_directLightColor = vec4(1.0, 1.0, 1.0, 1.0);
+	if(blockType == 2u)
+		y -= 0.1;
 	break;
 	case 3u:
 	tex_x = (blockType * 3u) % 12u + 2u;
@@ -68,11 +71,17 @@ void main(void) {
 in vec4 v_directLightColor;
 in vec2 v_TexCoord;
 
+const vec4 fogcolor = vec4(0.6, 0.8, 1.0, 1.0);
+const float fogdensity = .00003;
+
 out vec4 out_Color;
 
 uniform sampler2D u_Textures[2];
 uniform int u_TexIndex;
 
 void main(void) {
-  	out_Color = texture(u_Textures[u_TexIndex], v_TexCoord) * v_directLightColor;
+	float z = gl_FragCoord.z / gl_FragCoord.w;
+  	float fog = clamp(exp(-fogdensity * z * z), 0.2, 1);
+	vec4 color = texture(u_Textures[u_TexIndex], v_TexCoord) * v_directLightColor;
+  	out_Color = mix(fogcolor, color, fog);
 }
