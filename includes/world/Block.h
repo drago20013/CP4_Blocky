@@ -9,29 +9,40 @@ namespace glm {
 }
 
 struct Vertex {
-	GLubyte VertexData1; // x and y1, 
-	GLubyte VertexData2; // y2 and z, 
-	GLubyte VertexData3; //blockType, vertexpos
+	GLubyte VertexData1; // x, y1, 
+	GLubyte VertexData2; // y2, vertexpos, directlight,
+	GLubyte VertexData3; // z, blockType,
+	GLubyte VertexData4; // blockType2
 };
 
 enum class BlockType {
-	BlockType_Default = 7, //Air
-	BlockType_Grass = 0,
-	BlockType_Dirt = 1,
-	BlockType_Water = 2,
-	BlockType_Stone = 3,
-	BlockType_Wood = 4,
-	BlockType_Sand = 5
+	Default = 14, //Air
+	Grass = 0,
+	Dirt = 1,
+	Water = 2,
+	Stone = 3,
+	OakWood = 4,
+	Sand = 5,
+	OakLeaf = 6,
+	Brick = 7,
+	OakPlank = 8,
+	Glass = 9,
+	BirchWood = 10,
+	BirchLeaf = 11,
+	BirchPlank = 12,
+	Pumpkin = 13
 };
 
 class Block {
 public: 
 	Block();
 	bool IsActive() const;
+	bool IsTransparent() const;
 	void SetActive(bool active);
     void SetType(BlockType type);
     BlockType GetType()const {return m_BlockType;}
 private: 
 	bool m_Active;
+	bool m_Transparent;
 	BlockType m_BlockType;
 };

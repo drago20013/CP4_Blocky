@@ -22,6 +22,9 @@ public:
     void Update(float& deltaTime);
 
     glm::mat4 GetMVP() { return (m_Proj * m_View * m_Model); }
+    glm::mat4 GetProjection() const { return m_Proj; }
+    glm::mat4 GetView() const { return m_View; }
+    glm::vec3 GetLookAt() const { return m_Cam.GetLookAt(); }
     void SetModelM(const glm::mat4& model);
     void SetFirstMouse() {
         m_FirstMouse = true;
@@ -30,6 +33,7 @@ public:
     }
 
     const glm::vec3& GetPosition() const { return m_Pos; }
+    const glm::vec3& GetCamPosition() const { return m_Pos+m_CamPos; }
     const glm::vec3& GetLastPosition() const { return m_LastPos; }
     const glm::vec3 GetForwardVec() const { return m_Cam.GetForward(); }
     const glm::vec3& GetDimensions() const { return m_Dimensions; }
@@ -49,6 +53,7 @@ private:
     glm::vec3 m_Acc;
     glm::vec3 m_Vel;
     glm::vec3 m_Dimensions;
+
 
     bool m_OnGround;
     float m_Speed;

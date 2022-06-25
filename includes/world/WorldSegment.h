@@ -3,9 +3,13 @@
 #include "../Player.h"
 #include <unordered_map>
 #include <mutex>
+#include <map>
 
 #define SEGMENT_SIZE 16
 #define SEGMENT_AREA SEGMENT_SIZE*SEGMENT_SIZE
+
+extern unsigned int NEW_SCR_WIDTH;
+extern unsigned int NEW_SCR_HEIGHT;
 
 struct SegmentPos
 {
@@ -37,8 +41,13 @@ public:
 
 	BlockType Get(int x, int y, int z) const;
 	bool IsActive(int x, int y, int z) const;
+	bool IsTransparent(int x, int y, int z) const;
+	int GetSize() const { return m_Chunks.size(); };
 	void Set(int x, int y, int z, BlockType type);
 	void SetActive(int x, int y, int z, bool activeLevel);
+
+	void DestroyBlock();
+	void PlaceBlock();
 
 	void Render();
     void Load();
@@ -47,11 +56,12 @@ public:
 	void Generate();
 	void CheckCollision();
 	void GenereteSegment();
+	void Initialize();
 
 private:
 	std::shared_ptr<Player> m_Player;
 	std::unordered_map<SegmentPos, Chunk*> m_Chunks;
-	std::vector<Chunk*> m_ToRender;
+	std::multimap<float, Chunk*> m_ToRender;
     std::vector<Chunk*> m_ToLoad;
 	std::vector<Chunk*> m_ToUnload;
 	std::vector<Chunk*> m_ToGenerate;

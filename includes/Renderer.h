@@ -37,4 +37,12 @@ public:
     Renderer();
     void Clear() const;
     void Draw(const VertexArray& va, const Shader& shader, int elements) const;
+    void DrawCross();
+
+private:
+    std::unique_ptr<VertexBuffer> m_VBO;
+    std::unique_ptr<VertexArray> m_VAO;
+    std::unique_ptr<VertexBufferLayout> m_Layout;
+    std::unique_ptr<Shader> m_CrossShader;
+    float m_Cross[4][2];
 };
