@@ -20,6 +20,9 @@
 #include "WorldSegment.h"
 #include "glm/geometric.hpp"
 #include "vendor/stb_image/stb_image.h"
+#include "vendor/imgui/imgui.h"
+#include "vendor/imgui/imgui_impl_opengl3.h"
+#include "vendor/imgui/imgui_impl_glfw.h"
 
 // settings
 unsigned int SCR_WIDTH = 800;
@@ -42,8 +45,7 @@ float lastTime = 0.0f;   // Time of last frame
 std::filesystem::path g_WorkDir(
     "C:\\Users\\Michal\\source\\repos\\CP4_Blocky\\x64\\Debug");
 #else 
-std::filesystem::path g_WorkDir(
-    "./");
+std::filesystem::path g_WorkDir(std::filesystem::current_path());
 #endif
 #else
 std::filesystem::path g_WorkDir("/home/drago/CLionProjects/CP4_Blocky/");
@@ -77,7 +79,7 @@ int main() {
     stbi_image_free(images[0].pixels);
 
     std::shared_ptr<Player> player = std::make_shared<Player>(
-        glm::vec3(0.0f, 70.0f, 0.0f), glm::vec3(.4f, 1.8f, 0.4f), 10.0f);
+        glm::vec3(0.0f, 70.0f, 0.0f), glm::vec3(.4f, 1.8f, .4f), 8.0f);
 
     glfwSetWindowUserPointer(window, player.get());
 
@@ -107,6 +109,16 @@ int main() {
                 static_cast<Player*>(glfwGetWindowUserPointer(window))
                     ->SetFirstMouse();
             }
+        }
+
+        if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+            static_cast<Player*>(glfwGetWindowUserPointer(window))
+                ->ChangeBlockDown();
+        }
+
+        if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+            static_cast<Player*>(glfwGetWindowUserPointer(window))
+                ->ChangeBlockUp();
         }
 
         if (key == GLFW_KEY_X && action == GLFW_PRESS) {
@@ -158,20 +170,76 @@ int main() {
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
+    ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+    ImGui::StyleColorsDark();
+   
     //=======================================================
-    
     {
+        std::unique_ptr<VertexBuffer> m_VBO = std::make_unique<VertexBuffer>();
+        std::unique_ptr<VertexArray> m_VAO = std::make_unique<VertexArray>();
+        std::unique_ptr<VertexBufferLayout> m_Layout = std::make_unique<VertexBufferLayout>();
+        std::unique_ptr<Shader> m_CrossShader = std::make_unique<Shader>("CrossShader");
+        m_Layout->PushAttrib<glm::vec2>(1);
+        float m_Cross[4][2] = {
+            {-0.01, 0},
+            {+0.01, 0},
+            {0, -0.01},
+            {0, +0.01}
+        };
+
+        auto DrawCross = [&]() {
+            GLCall(glDisable(GL_DEPTH_TEST));
+            m_VBO->LoadData(m_Cross, sizeof(m_Cross));
+            m_VAO->AddBufferf(*m_VBO, *m_Layout);
+            m_CrossShader->Bind();
+            m_CrossShader->SetUniform1f("u_aspect", aspectRatio);
+            GLCall(glDrawArrays(GL_LINES, 0, 4));
+            GLCall(glEnable(GL_DEPTH_TEST));
+        };
+
+
         std::unique_ptr<Renderer> render = std::make_unique<Renderer>();
         std::unique_ptr<WorldSegment> segment = std::make_unique<WorldSegment>(player);
+        
+            std::unique_ptr<VertexBuffer> m_LogoVBO = std::make_unique<VertexBuffer>();
+            std::unique_ptr<VertexArray> m_LogoVAO = std::make_unique<VertexArray>();
+            std::unique_ptr<VertexBufferLayout> m_LogoLayout = std::make_unique<VertexBufferLayout>();
+            std::unique_ptr<Shader> m_LogoShader = std::make_unique<Shader>("Simple");
+            std::shared_ptr<Texture> m_Logo = std::make_unique<Texture>((g_WorkDir / "res/textures/Logo.png").string());
+            m_LogoLayout->PushAttrib<glm::vec2>(1);
+            m_LogoLayout->PushAttrib<glm::vec2>(1);
+            glm::vec2 data[6][2] = {
+                {{-1.f, -1.f}, {0.f, 0.f}},
+                {{ 1.f, -1.f}, {1.f, 0.f}},
+                {{-1.f,  1.f}, {0.f, 1.f}},
+                {{-1.f,  1.f}, {0.f, 1.f}},
+                {{ 1.f, -1.f}, {1.f, 0.f}},
+                {{ 1.f,  1.f}, {1.f, 1.f}}
+            };
+            m_LogoVBO->LoadData(data, sizeof(data));
+            m_LogoVAO->AddBufferf(*m_LogoVBO, *m_LogoLayout);
+            //Display logo
+            m_Logo->Bind(2);
+            m_LogoShader->Bind();
+            m_LogoShader->SetUniform1i("u_Texture", 2);
+            m_LogoShader->SetUniform1f("u_aspect", aspectRatio);
+            render->Clear();
+            render->Draw(*m_LogoVAO, *m_LogoShader, 6);
+            glfwSwapBuffers(window);
 
-        float lastFrame = 0.0f;
-        int nbFrames = 0;
+            segment->GenereteSegment();
+            auto loadInBack = std::async(std::launch::async, [&]() {
+                segment->Initialize();
+                });
+            printf("Loading in the background, displaying blocky\n");
+                     
+            loadInBack.wait();
+            printf("Loaded\n"); 
 
-        // Loading screen here
-
-        render->Clear();
-        segment->Initialize();
-        glfwSwapBuffers(window);
+            bool ShowOverlay = true;
+            int corner = 1;
 
         // render loop
         // -----------
@@ -179,31 +247,22 @@ int main() {
             float currentFrame = (float)glfwGetTime();
             deltaTime = currentFrame - lastTime;
             lastTime = currentFrame;
-            nbFrames++;
-            if (currentFrame - lastFrame >= 2.0) {
-                printf("FPS: %d -> %f ms\n", (int)(nbFrames * 0.5f),
-                       2000.0 / (float)nbFrames);
-                printf("Player position: x:%f y:%f z:%f\n",
-                       player->GetPosition().x, player->GetPosition().y,
-                       player->GetPosition().z);
-                printf("Player velocity: x:%f y:%f z:%f\nMagnitude: %f\n",
-                       player->GetVelocity().x, player->GetVelocity().y,
-                       player->GetVelocity().z,
-                       glm::length(player->GetVelocity()));
-                nbFrames = 0;
-                lastFrame = currentFrame;
+
+            render->Clear();
+
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            if (!mouseHidden) {
+                deltaTime = 0;
+                m_LogoShader->Bind();
+                m_LogoShader->SetUniform1f("u_aspect", aspectRatio);
+                render->Draw(*m_LogoVAO, *m_LogoShader, 6);
             }
-
-            
-            
-            if (!mouseHidden) deltaTime = 0;
-            
-
-            if (mouseHidden) {
-                render->Clear();
-
+            else {
                 player->ProcessMove(window, deltaTime);
-                
+
                 player->Update(deltaTime);
 
                 if (!flyMode) segment->CheckCollision();
@@ -220,26 +279,70 @@ int main() {
                     destroyBlock = false;
                 }
 
-                segment->Update(); 
+                segment->Update();
 
                 segment->Render();
 
-                render->DrawCross();
-
-                glfwSwapBuffers(window);
+                DrawCross();
             }
 
-           
+            {
+                ImGuiIO& io = ImGui::GetIO();
+                ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+                if (corner != -1)
+                {
+                    const float PAD = 10.0f;
+                    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+                    ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
+                    ImVec2 work_size = viewport->WorkSize;
+                    ImVec2 window_pos, window_pos_pivot;
+                    window_pos.x = (corner & 1) ? (work_pos.x + work_size.x - PAD) : (work_pos.x + PAD);
+                    window_pos.y = (corner & 2) ? (work_pos.y + work_size.y - PAD) : (work_pos.y + PAD);
+                    window_pos_pivot.x = (corner & 1) ? 1.0f : 0.0f;
+                    window_pos_pivot.y = (corner & 2) ? 1.0f : 0.0f;
+                    ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+                    window_flags |= ImGuiWindowFlags_NoMove;
+                }
+                ImGui::SetNextWindowBgAlpha(0.35f); 
+                if (ImGui::Begin("Info", &ShowOverlay, window_flags))
+                {
+                    ImGui::Text("Application average %.3f ms/frame \n(%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+                    ImGui::Separator();
+                    ImGui::Text("Player position:\nx: %d y: %d, z: %d", (int)player->GetPosition().x, (int)player->GetPosition().y, (int)player->GetPosition().z);
+                    ImGui::Text("Chosen block: %s", player->GetEquippedString());
+                    if (!mouseHidden && ImGui::BeginPopupContextWindow())
+                    {
+                        if (ImGui::MenuItem("Custom", NULL, corner == -1)) corner = -1;
+                        if (ImGui::MenuItem("Top-left", NULL, corner == 0)) corner = 0;
+                        if (ImGui::MenuItem("Top-right", NULL, corner == 1)) corner = 1;
+                        if (ImGui::MenuItem("Bottom-left", NULL, corner == 2)) corner = 2;
+                        if (ImGui::MenuItem("Bottom-right", NULL, corner == 3)) corner = 3;
+                        if (ShowOverlay && ImGui::MenuItem("Close")) ShowOverlay = false;
+                        ImGui::EndPopup();
+                    }
+                }
+                ImGui::End();
+            }
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+            glfwSwapBuffers(window);
 
             if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
                 glfwSetWindowShouldClose(window, true);
 
-           
+
             glfwPollEvents();
         }
     }
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }

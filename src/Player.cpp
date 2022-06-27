@@ -16,7 +16,7 @@ Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed)
     m_Pos = pos;
     m_LastPos = pos;
     m_Dimensions = dimensions;
-    m_CamPos = glm::vec3(0.0f, m_Dimensions.y - 0.3f, 0.0f);
+    m_CamPos = glm::vec3(0.0f, m_Dimensions.y - 0.5f, 0.0f);
     m_Speed = speed;
     m_Acc = glm::vec3(0.0f);
     m_Vel = glm::vec3(0.0f);
@@ -25,9 +25,62 @@ Player::Player(glm::vec3 pos, glm::vec3 dimensions, float speed)
     m_Proj = glm::perspective(glm::radians(m_Cam.GetZoom()), aspectRatio, 0.1f,
                               1000.0f);
     m_View = m_Cam.GetViewMatrix();
+    m_Equipped = BlockType::Dirt;
 }
 
 void Player::SetModelM(const glm::mat4& model) { m_Model = model; }
+
+const BlockType Player::GetEquipped() const
+{
+    return m_Equipped;
+}
+
+const std::string Player::GetEquippedString() const
+{
+    std::string blockName{};
+    switch ((int)m_Equipped) {
+    case 0:
+        blockName = "Grass";
+        break;
+    case 1:
+        blockName = "Dirt";
+        break;
+    case 3:
+        blockName = "Stone";
+        break;
+    case 4:
+        blockName = "OakWood";
+        break;
+    case 5:
+        blockName = "Sand";
+        break;
+    case 6:
+        blockName = "OakLeaf";
+        break;
+    case 7:
+        blockName = "Brick";
+        break;
+    case 8:
+        blockName = "OakPlank";
+        break;
+    case 9:
+        blockName = "Glass";
+        break;
+    case 10:
+        blockName = "BirchWood";
+        break;
+    case 11:
+        blockName = "BirchLeaf";
+        break;
+    case 12:
+        blockName = "BirchPlank";
+        break;
+    case 13:
+        blockName = "Pumpkin";
+        break;
+    }
+    return blockName;
+}
 
 void Player::SetPosition(glm::vec3 newPos) {
     m_Pos = newPos;
@@ -35,6 +88,30 @@ void Player::SetPosition(glm::vec3 newPos) {
 }
 
 void Player::SetCamPosition(glm::vec3 newPos) { m_CamPos = newPos; }
+
+void Player::ChangeBlockUp()
+{
+    int i = (int)m_Equipped;
+    if (i == 1)
+        i = 3;
+    else if (i == 13)
+        i = 0;
+    else i++;
+    
+    m_Equipped = (BlockType)i;
+}
+
+void Player::ChangeBlockDown()
+{
+    int i = (int)m_Equipped;
+    if (i == 3)
+        i = 1;
+    else if (i == 0)
+        i = 13;
+    else i--;
+    
+    m_Equipped = (BlockType)i;
+}
 
 void Player::ProcessMouse(GLFWwindow* window, double& xposIn, double& yposIn) {
     float xpos = static_cast<float>(xposIn);
@@ -104,7 +181,6 @@ void Player::Update(float& deltaTime) {
     m_OnGround = false;
 }
 
-// TODO (drago): Redesign, ProcessMove adds acceleration
 void Player::ProcessMove(GLFWwindow* window, float& deltaTime) {
     //=================================
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {

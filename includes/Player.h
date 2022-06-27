@@ -3,7 +3,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 // clang-format on
+#include <string>
 #include "Camera.h"
+#include "Block.h"
 
 extern unsigned int SCR_WIDTH;
 extern unsigned int SCR_HEIGHT;
@@ -38,6 +40,8 @@ public:
     const glm::vec3 GetForwardVec() const { return m_Cam.GetForward(); }
     const glm::vec3& GetDimensions() const { return m_Dimensions; }
     const glm::vec3& GetVelocity() const { return m_Vel; }
+    const BlockType GetEquipped() const;
+    const std::string GetEquippedString() const;
 
     void SetDeltaPosition(glm::vec3 newDeltaPos) { m_Acc = newDeltaPos; }
     void SetPosition(glm::vec3 newPos);
@@ -46,6 +50,8 @@ public:
     void SetVelocityZ(float newVelZ) { m_Vel.z = newVelZ; };
     void SetCamPosition(glm::vec3 newPos);
     void SetOnGround(bool activeLevel) { m_OnGround = activeLevel; }
+    void ChangeBlockUp();
+    void ChangeBlockDown();
 
 private:
     glm::vec3 m_Pos;
@@ -58,6 +64,7 @@ private:
     bool m_OnGround;
     float m_Speed;
     float m_Gravity;
+    BlockType m_Equipped;
 
     Camera m_Cam;
     glm::vec3 m_CamPos;

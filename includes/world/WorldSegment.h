@@ -39,12 +39,13 @@ public:
 	WorldSegment(std::shared_ptr<Player> player);
 	~WorldSegment();
 
-	BlockType Get(int x, int y, int z) const;
-	bool IsActive(int x, int y, int z) const;
-	bool IsTransparent(int x, int y, int z) const;
+	BlockType Get(int x, int y, int z);
+	bool IsActive(int x, int y, int z) ;
+	bool IsTransparent(int x, int y, int z) ;
 	int GetSize() const { return m_Chunks.size(); };
 	void Set(int x, int y, int z, BlockType type);
 	void SetActive(int x, int y, int z, bool activeLevel);
+	void SetModified(int x, int y, int z);
 
 	void DestroyBlock();
 	void PlaceBlock();
@@ -59,15 +60,19 @@ public:
 	void Initialize();
 
 private:
+	glm::ivec2 GetInChunkPos(glm::ivec3& pos);
+	bool ShootRay(glm::ivec3 &blockPos, glm::ivec3& blockToSetPos);
+
+private:
 	std::shared_ptr<Player> m_Player;
 	std::unordered_map<SegmentPos, Chunk*> m_Chunks;
 	std::multimap<float, Chunk*> m_ToRender;
     std::vector<Chunk*> m_ToLoad;
 	std::vector<Chunk*> m_ToUnload;
 	std::vector<Chunk*> m_ToGenerate;
-	std::mutex m_UnLoadMutex;
 
 	std::shared_ptr<Shader> m_ChunkShader;
 	std::shared_ptr<Texture> m_WhiteTexture;
 	std::shared_ptr<Texture> m_TextureAtlas;
+	std::shared_ptr<Renderer> m_Renderer;
 };

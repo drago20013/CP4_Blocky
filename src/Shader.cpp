@@ -1,16 +1,14 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <filesystem>
-
 #include "Renderer.h"
 #include "Shader.h"
 
 extern std::filesystem::path g_WorkDir;
 
-Shader::Shader(const std::string& filepath) : m_FilePath(filepath) {
+FileLoader Shader::m_FileLoader = FileLoader();
+
+Shader::Shader(const std::string& filename) : m_FileName(filename) {
     m_RenderID = 0;
-    ShaderProgramSource source = ParseShader(filepath);
+    ShaderProgramSource source = ParseShader(m_FileName);
     m_RenderID = CreateShader(source.VertexSource, source.FragmentSource);
 }
 
@@ -61,29 +59,8 @@ unsigned int Shader::GetUniformLocation(const std::string& name) {
     return location;
 }
 
-ShaderProgramSource Shader::ParseShader(const std::string& filepath) {
-    std::ifstream inFile(filepath);
-
-    enum class ShaderType {
-        NONE = -1, VERTEX = 0, FRAGMENT = 1
-    };
-
-    ShaderType type = ShaderType::NONE;
-    std::string line;
-    std::stringstream ss[2];
-    while (getline(inFile, line))
-    {
-        if (line.find("#shader") != std::string::npos) {
-            if (line.find("vertex") != std::string::npos)
-                type = ShaderType::VERTEX;
-            else if (line.find("fragment") != std::string::npos)
-                type = ShaderType::FRAGMENT;
-        }
-        else {
-            ss[(int)type] << line << '\n';
-        }
-    }
-    return { ss[0].str(), ss[1].str() };
+ShaderProgramSource Shader::ParseShader(const std::string& filename) {
+    return m_FileLoader.LoadShader(filename);
 }
 
 unsigned int Shader::CompileShader(unsigned int type, const std::string& source) {

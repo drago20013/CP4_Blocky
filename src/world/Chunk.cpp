@@ -4,17 +4,23 @@
 
 #include "../../includes/world/WorldSegment.h"
 #include "Block.h"
+#include <random>
 
 FastNoise::SmartNode<> Chunk::m_rootNoiseNode = FastNoise::NewFromEncodedNodeTree("EwAK16M8DQAGAAAAAAAAQAkAAFK4Hj8AAAAAPw==");
 
-Chunk::Chunk(int x, int z, WorldSegment* segment, std::shared_ptr<Shader>& ChunkShader)
-    : m_Segment(segment), m_PosX(x), m_PosZ(z), m_Changed(true), m_Renderer() {
+Chunk::Chunk(int x, int z, WorldSegment* segment, std::shared_ptr<Shader>& ChunkShader, std::shared_ptr<Renderer>& renderer)
+    : m_Segment(segment), m_PosX(x), m_PosZ(z), m_Changed(true){
     m_Elements[0] = 0;
     m_Elements[1] = 0;
+    m_Elements[2] = 0;
+    m_Modified = false;
     m_ChunkShader = ChunkShader;
+    m_Renderer = renderer;
     m_VBO = std::make_unique<VertexBuffer>();
+    m_TransparentVBO = std::make_unique<VertexBuffer>();
     m_WaterVBO = std::make_unique<VertexBuffer>();
     m_VAO = std::make_unique<VertexArray>();
+    m_TransparentVAO = std::make_unique<VertexArray>();
     m_WaterVAO = std::make_unique<VertexArray>();
     m_Layout = std::make_unique<VertexBufferLayout>();
     m_Layout->PushAttrib<GLubyte>(1); //VertexData1
@@ -23,8 +29,19 @@ Chunk::Chunk(int x, int z, WorldSegment* segment, std::shared_ptr<Shader>& Chunk
     m_Layout->PushAttrib<GLubyte>(1); //VertexData4
     m_Loaded = false;
     m_noiseOutput.resize(CHUNK_AREA);
+    m_treesNoise.resize(CHUNK_AREA);
+    std::hash<SegmentPos> hash;
 
-    // Generate a 16 x 16 area of noise
+    std::default_random_engine generator;
+    generator.seed(hash({ m_PosX,m_PosZ }));
+    std::uniform_int_distribution<int> distribution(0, 1000);
+
+    srand(hash({ m_PosX, m_PosZ }));
+    for (auto& n : m_treesNoise) {
+        n = distribution(generator);
+    }
+
+    // Generate a 16 x 16 area of noise for hight map
     m_rootNoiseNode->GenUniformGrid2D(m_noiseOutput.data(), m_PosZ * CHUNK_SIZE, m_PosX * CHUNK_SIZE, CHUNK_SIZE , CHUNK_SIZE, 0.2f, SEED);
     for (auto& n : m_noiseOutput) {
         n = (n + 1) * .5f;
@@ -46,7 +63,6 @@ BlockType Chunk::Get(int x, int y, int z) const {
 void Chunk::Set(int x, int y, int z, BlockType type) {
     if (x < 0) x += CHUNK_SIZE;
     if (z < 0) z += CHUNK_SIZE;
-    std::lock_guard<std::mutex> guard(m_BlockMutex);
     m_Blocks[x][y][z].SetType(type);
     m_Changed = true;
 }
@@ -58,9 +74,13 @@ void Chunk::SetActive(int x, int y, int z, bool activeLevel)
     m_Blocks[x][y][z].SetActive(activeLevel);
 }
 
+void Chunk::SetModified()
+{
+    m_Modified = true;
+}
+
 void Chunk::SetChanged(bool changedLevel)
 {
-    std::lock_guard<std::mutex> guard(m_BlockMutex);
     m_Changed = changedLevel;
 }
 
@@ -96,16 +116,16 @@ void Chunk::Unload(){
 void Chunk::PlaceTree(int x, int y, int z) {
     int height{};
 
-    if ((rand() % 100) <= 20)
+    if (m_treesNoise[x * CHUNK_SIZE + z] < 10)
         height = 4;
-    else if ((rand() % 100) <= 20)
+    else if (m_treesNoise[x * CHUNK_SIZE + z] < 20)
         height = 5;
     else height = 6;
 
     BlockType woodType{BlockType::OakWood};
     BlockType leafType{BlockType::OakLeaf};
 
-    if ((rand() % 100) <= 20) {
+    if (m_treesNoise[x * CHUNK_SIZE + z] < 5) {
         woodType = BlockType::BirchWood;
         leafType = BlockType::BirchLeaf;
     }
@@ -165,9 +185,9 @@ void Chunk::Load(){
                         else {
                             Set(x, y, z, BlockType::Grass);
                             if (x > 1 && x < CHUNK_SIZE - 2 && z > 1 && z < CHUNK_SIZE - 2) {
-                                if ((rand() % 100) <= 1)
+                                if (m_treesNoise[x*CHUNK_SIZE+z] <= 20)
                                     PlaceTree(x, y + 1, z);
-                                else if ((rand() % 10000) <= 5) {
+                                else if (m_treesNoise[x * CHUNK_SIZE + z] >= 999) {
                                     Set(x, y+1, z, BlockType::Pumpkin);
                                     SetActive(x, y+1, z, true);
                                 }
@@ -191,7 +211,6 @@ void Chunk::Load(){
 }
 
 void Chunk::Generate() {
-    std::lock_guard<std::mutex> guard(m_VerteciesMutex);
     int i{};
     uint8_t blockType{};
 
@@ -214,8 +233,11 @@ void Chunk::Generate() {
                 //2-top face
                 //3-bottom face
 
-                if (IsTransparent(x, y, z)) {
+                if (Get(x, y, z) == BlockType::Water) {
                     i = 1;
+                }
+                else if (IsTransparent(x, y, z)) {
+                    i = 2;
                 }
                 else i = 0;
 
@@ -285,16 +307,20 @@ void Chunk::Generate() {
 
     m_Elements[0] = m_Vertecies[0].size();
     m_Elements[1] = m_Vertecies[1].size();
+    m_Elements[2] = m_Vertecies[2].size();
     m_Changed = false;
 }
 
 void Chunk::Update() {
     m_VBO->LoadData(m_Vertecies[0].data(), m_Elements[0] * 4);
+    m_TransparentVBO->LoadData(m_Vertecies[2].data(), m_Elements[2] * 4);
     m_WaterVBO->LoadData(m_Vertecies[1].data(), m_Elements[1] * 4);
     m_VAO->AddBuffer(*m_VBO, *m_Layout);
+    m_TransparentVAO->AddBuffer(*m_TransparentVBO, *m_Layout);
     m_WaterVAO->AddBuffer(*m_WaterVBO, *m_Layout);
     m_Vertecies[0].resize(0);
     m_Vertecies[1].resize(0);
+    m_Vertecies[2].resize(0);
 }
 
 void Chunk::Render(const glm::mat4& MVP) {
@@ -318,8 +344,8 @@ void Chunk::Render(const glm::mat4& MVP) {
 
     m_ChunkShader->Bind();
     m_ChunkShader->SetUniformMat4f("u_MVP", MVP);
-
    
-    m_Renderer.Draw(*m_VAO, *m_ChunkShader, m_Elements[0]);
-    m_Renderer.Draw(*m_WaterVAO, *m_ChunkShader, m_Elements[1]);
+    m_Renderer->Draw(*m_VAO, *m_ChunkShader, m_Elements[0]);
+    m_Renderer->Draw(*m_WaterVAO, *m_ChunkShader, m_Elements[1]);
+    m_Renderer->Draw(*m_TransparentVAO, *m_ChunkShader, m_Elements[2]);
 }
