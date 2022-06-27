@@ -27,7 +27,7 @@ ShaderProgramSource FileLoader::LoadShader(const std::string& filename)
 
             if (!versionMatch && !vertexMatch && !fragmentMatch) {
                 printf("Your shader file is incomplete.\n");
-                return { "Wrong Shader", "Content" };
+                break;
             }
 
             enum class ShaderType {
@@ -55,6 +55,7 @@ ShaderProgramSource FileLoader::LoadShader(const std::string& filename)
             return { ss[0].str(), ss[1].str() };
         }
     }
+    return { "Wrong Shader", "Content" };
 }
 
 FileLoader::FileLoader()

@@ -309,7 +309,7 @@ int main() {
                     ImGui::Text("Application average %.3f ms/frame \n(%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
                     ImGui::Separator();
                     ImGui::Text("Player position:\nx: %d y: %d, z: %d", (int)player->GetPosition().x, (int)player->GetPosition().y, (int)player->GetPosition().z);
-                    ImGui::Text("Chosen block: %s", player->GetEquippedString());
+                    ImGui::Text("Chosen block: %s", player->GetEquippedString().c_str());
                     if (!mouseHidden && ImGui::BeginPopupContextWindow())
                     {
                         if (ImGui::MenuItem("Custom", NULL, corner == -1)) corner = -1;

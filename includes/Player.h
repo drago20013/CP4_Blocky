@@ -35,7 +35,7 @@ public:
     }
 
     const glm::vec3& GetPosition() const { return m_Pos; }
-    const glm::vec3& GetCamPosition() const { return m_Pos+m_CamPos; }
+    const glm::vec3 GetCamPosition() const { return m_Pos+m_CamPos; }
     const glm::vec3& GetLastPosition() const { return m_LastPos; }
     const glm::vec3 GetForwardVec() const { return m_Cam.GetForward(); }
     const glm::vec3& GetDimensions() const { return m_Dimensions; }
