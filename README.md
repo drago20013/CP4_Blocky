@@ -15,7 +15,7 @@ My first time in the graphical programming. I could do better here with design p
 ---
 
 ## External Libraries
-* [Dear ImGUI](https://user-images.githubusercontent.com/11234896/183734991-1a1088ba-13b9-4a4f-926a-4d1c096ecfee.png)
+* [Dear ImGUI](https://github.com/ocornut/imgui)
 * [FastNoise2](https://github.com/Auburn/FastNoise2)
 * [GLFW](https://www.glfw.org)
 * [GLAD](https://github.com/Dav1dde/glad)
