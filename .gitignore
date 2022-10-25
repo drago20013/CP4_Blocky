@@ -1,4 +1,6 @@
 imgui.ini
+Doxyfile
+doxygen/
 CMakeLists.txt
 include/
 compile_commands.json
