@@ -1,5 +1,5 @@
 #shader vertex
-#version 330 core
+#version 460 core
 
 layout(location = 0) in uint verData1;
 layout(location = 1) in uint verData2; 
@@ -66,7 +66,7 @@ void main(void) {
 }
 
 #shader fragment
-#version 330 core
+#version 460 core
 
 in vec4 v_directLightColor;
 in vec2 v_TexCoord;

@@ -1,5 +1,5 @@
 #shader vertex
-#version 330 core
+#version 460 core
 
 layout(location = 0) in vec2 pos;
 
@@ -11,7 +11,7 @@ void main(void) {
 }
 
 #shader fragment
-#version 330 core
+#version 460 core
 
 out vec4 out_Color;
 

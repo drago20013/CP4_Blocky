@@ -1,5 +1,5 @@
 #shader vertex
-#version 330 core
+#version 460 core
 
 layout(location = 0) in vec2 Pos;
 layout(location = 1) in vec2 TexPos;
@@ -14,7 +14,7 @@ void main(void) {
 }
 
 #shader fragment
-#version 330 core
+#version 460 core
 
 in vec2 v_TexCoord;
 
