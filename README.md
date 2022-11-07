@@ -9,7 +9,9 @@ My first time in the graphical programming. I could do better here with design p
 
 ### What I learned
 * Basics of OpenGL API
-* Basic concepts of rendering pipeline
+* How rendering pipeline works
+* How to create simple renderer, camera etc.
+* How to abstract OpenGL to classes
 * Managing vertex data at the level of bits (3 bits for x position component etc.)
 
 ### Pictures
