@@ -7,6 +7,11 @@
 ### Description
 My first time in the graphical programming. I could do better here with design patterns and general code quality, but I was more focused on learning new technologies. Time for this project was limited and finally I didn't optimize it well. Definetelly worth going back, and doing refactor.
 
+### What I learned
+* Basics of OpenGL API
+* Basic concepts of rendering pipeline
+* Managing vertex data at the level of bits (3 bits for x position component etc.)
+
 ### Pictures
 ![entry](https://user-images.githubusercontent.com/11234896/183735766-24e7ddcb-470d-44ef-a484-1c343fa6daf7.png)
 
